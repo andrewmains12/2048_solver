@@ -14,5 +14,6 @@ trait GameState {
    */
     def transition(move: Symbol): GameState
 
+    def gameOver(): Boolean
 
 }
