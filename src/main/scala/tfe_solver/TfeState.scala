@@ -2,6 +2,7 @@ package tfe_solver
 
 import solver.GameState
 import org.apache.commons.lang3.StringUtils
+import tfe_solver.util.MultiDimIterators
 
 object TfeState {
   val Directions = Map('up -> (-1, 0), 'down -> (1, 0), 'left -> (0, -1), 'right -> (0, 1))
@@ -10,24 +11,31 @@ object TfeState {
 
 class TfeState(val tiles: Array[Array[Int]]) extends GameState {
 
+  /**
+   * Various ways of traversing the grid
+   */
   class GridView {
+    //TODO: make the WithIndex bit a decorator/transformation
+    def transposedWithIndex(): Iterator[(Int, (Int, Int))] = {
+      return new MultiDimIterators.TwoDimIteratorWithIndex[Int](tiles, true)
+    }
 
-    def transposed() = for (
-      j <- 0.until(tiles(0).length);
-      i <- 0.until(tiles.length))
-       yield tiles(i)(j)
+    def transposed(): Iterator[Int] = {
+      return new MultiDimIterators.TwoDimIterator[Int](tiles, true)
+    }
 
-    def indexed() = for (
-      i <- 0.until(tiles.length);
-      j <- 0.until(tiles(0).length)
-    )
-       yield ((i, j), tiles(i)(j))
+    def iterWithIndex(): Iterator[(Int, (Int, Int))] = {
+      return new MultiDimIterators.TwoDimIteratorWithIndex[Int](tiles)
+    }
+
+    def iter(): Iterator[Int] = {
+      return new MultiDimIterators.TwoDimIterator[Int](tiles)
+    }
+
   }
 
-  val view = new GridView()
+  val gridView = new GridView()
 
-
-  //top left is 0,0
   /**
    * Create the GameState which would result from performing move
    * @param move
@@ -42,21 +50,13 @@ class TfeState(val tiles: Array[Array[Int]]) extends GameState {
    */
   override def possibleMoves(): List[Symbol] = {
 
-    val moves = collection.mutable.Set[Symbol]()
-    tiles.view.zipWithIndex.foreach(
-      {case (row, i) =>
-      row.view.zipWithIndex.filter(_._1 != TfeState.EmptyTile).foreach({
-        case(tile, j) =>
-          moves ++= (for ((dirName, move) <- TfeState.Directions.iterator if canMove(tile, (i, j), move))
-          yield dirName
+    return gridView.iterWithIndex().filter(_._1 != TfeState.EmptyTile).flatMap(
+      {case (tile, (i, j)) =>
+         (for ((dirName, move) <- TfeState.Directions.iterator if canMove(tile, (i, j), move))
+            yield dirName
             )
-      })
-    })
-
-    return moves.toList
+      }).toList
   }
-
-
 
   val EmptyTile = -1
 
