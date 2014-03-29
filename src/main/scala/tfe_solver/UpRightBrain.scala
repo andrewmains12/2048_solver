@@ -12,7 +12,6 @@ class UpRightBrain extends Brain {
     if (moves.isEmpty)
       throw new IllegalArgumentException("Game is over")
 
-
     for (move <- movePrecedence) {
       if (moves.contains(move)) {
         return move
