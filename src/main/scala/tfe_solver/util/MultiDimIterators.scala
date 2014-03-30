@@ -79,4 +79,15 @@ object MultiDimIterators {
   }
 
 
+  def rowIterator[T](array: Array[Array[T]]):Iterator[Seq[T]] = {
+    if (array.isEmpty) return Iterator.empty
+    else return new TwoDimIterator(array).grouped(array(0).length)
+  }
+
+  def columnIterator[T](array: Array[Array[T]]):Iterator[Seq[T]] = {
+    if (array.isEmpty) return Iterator.empty
+    else return new TwoDimIterator(array, transpose = true).grouped(array.length)
+  }
+
+
 }
