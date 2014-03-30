@@ -2,47 +2,110 @@ package tfe_solver
 
 import solver.GameState
 import org.apache.commons.lang3.StringUtils
-import tfe_solver.util.MultiDimIterators
 
 object TfeState {
+  val WinningNumber = 2048
+
   val Directions = Map('up -> (-1, 0), 'down -> (1, 0), 'left -> (0, -1), 'right -> (0, 1))
   val EmptyTile = -1
 }
 
 class TfeState(val tiles: Array[Array[Int]]) extends GameState {
 
+  val height = tiles.length
+
+  //should check for length here probably
+  val width = tiles(0).length
+
   /**
    * Various ways of traversing the grid
    */
-  class GridView {
+  class GridView(array: Array[Array[Int]]) {
     //TODO: make the WithIndex bit a decorator/transformation
     def transposedWithIndex(): Iterator[(Int, (Int, Int))] = {
-      return new MultiDimIterators.TwoDimIteratorWithIndex[Int](tiles, true)
+      for (
+        j <- 0.until(width).iterator;
+        i <- 0.until(height).iterator
+      ) yield (tiles(i)(j), (i, j))
     }
 
     def transposed(): Iterator[Int] = {
-      return new MultiDimIterators.TwoDimIterator[Int](tiles, true)
+      for (
+        j <- 0.until(width).iterator;
+        i <- 0.until(height).iterator
+      ) yield tiles(i)(j)
     }
 
     def iterWithIndex(): Iterator[(Int, (Int, Int))] = {
-      return new MultiDimIterators.TwoDimIteratorWithIndex[Int](tiles)
+      return for (
+        i <- 0.until(height).iterator;
+        j <- 0.until(width).iterator
+      )
+        yield (tiles(i)(j), (i, j))
     }
 
     def iter(): Iterator[Int] = {
-      return new MultiDimIterators.TwoDimIterator[Int](tiles)
+      for (
+        i <- 0.until(height).iterator;
+        j <- 0.until(width).iterator
+      )
+        yield tiles(i)(j)
+    }
+
+    def iterRows: Iterator[Seq[Int]] = {
+      for (
+        i <- 0.until(height).iterator
+      ) yield tiles(i)
+    }
+
+    def iterColumns: Iterator[Seq[Int]] = {
+      transposed().grouped(height)
     }
 
   }
 
-  val gridView = new GridView()
+  val gridView = new GridView(tiles)
+
 
   /**
    * Create the GameState which would result from performing move
    * @param move
    */
   override def transition(move: Symbol): GameState = {
-    return new TfeState(Array.ofDim[Int](2,2))
+    val newGrid = up()
+    // val newGrid = move match {
+    //   case 'up => {up()}
+    // }
+    return new TfeState(newGrid)
   }
+
+  def up(): Array[Array[Int]] = {
+
+    val rtn = Array.fill(height, width)(TfeState.EmptyTile)
+
+    //Space fill and merge
+    for ((col, j) <- gridView.iterColumns.zipWithIndex) {
+      var insertPos = 0
+
+      //invariant: insertPos < height
+      for (value <- col.filter(_ != TfeState.EmptyTile)) {
+        //value is non empty
+        if (rtn(insertPos)(j) == TfeState.EmptyTile) {
+          rtn(insertPos)(j) = value
+        } else if (rtn(insertPos)(j) == value) {
+          //merge
+          rtn(insertPos)(j) = value * 2
+          insertPos += 1
+        } else {
+          //can't merge and not empty, so place it in the next slot
+          insertPos += 1
+          rtn(insertPos)(j) = value
+        }
+      }
+    }
+    rtn
+  }
+
 
   /**
    *
@@ -57,8 +120,6 @@ class TfeState(val tiles: Array[Array[Int]]) extends GameState {
             )
       }).toList
   }
-
-  val EmptyTile = -1
 
   def canMove(tileVal: Int, curPos: Tuple2[Int, Int], move: Tuple2[Int, Int]): Boolean = {
     val nextX = curPos._1 + move._1
@@ -95,6 +156,6 @@ class TfeState(val tiles: Array[Array[Int]]) extends GameState {
     )
   }
 
-  override def gameOver(): Boolean = possibleMoves().isEmpty
+  override def gameOver(): Boolean = possibleMoves().isEmpty || tiles.contains(TfeState.WinningNumber)
 
 }
