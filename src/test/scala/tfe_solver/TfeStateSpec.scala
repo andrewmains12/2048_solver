@@ -75,11 +75,56 @@ class TfeStateSpec extends FunSpec with Matchers {
     //convenience alias
     val e = TfeState.EmptyTile
 
-    def doTest(direction: Symbol, inputGrid: Array[Array[Int]], desiredGrid: Array[Array[Int]]) {
+    def doTest(direction: Symbol, inputGrid: Array[Array[Int]], desiredGrid: Array[Array[Int]]) = {
       val input = new TfeState(inputGrid)
 
       input.transition(direction).tiles should equal(desiredGrid)
     }
+
+    /**
+     * Apply fn n times, passing the output from the first application to the second and so on.
+     * @param n
+     * @param initial
+     * @param fn
+     * @tparam RetT
+     */
+    def applyN[RetT](n: Int, initial: RetT, fn: (RetT) => RetT): RetT = {
+
+      var curArg = initial
+
+      for (i <- 0.until(n)) {
+        curArg = fn(curArg)
+      }
+
+      return curArg
+    }
+
+    def rotateRight(grid: Array[Array[Int]]):Array[Array[Int]] =  {
+      val rtn = Array.ofDim[Int](grid.length, grid(0).length)
+
+      //rotation
+      for((row, i) <- grid.iterator.zipWithIndex;
+          (value, j) <- row.reverseIterator.zipWithIndex
+      ) {
+        rtn(j)(i) = value
+      }
+
+      rtn
+    }
+
+    /**
+     * Not efficient; goes by way of rotateRight 3 times
+     * @param grid
+     * @return
+     */
+    def rotateLeft(grid: Array[Array[Int]]) = applyN(3, grid, rotateRight)
+
+    /**
+     * Not efficient; goes by way of rotateRight twice. Doesn't matter for now
+     * @param grid
+     */
+    def flip(grid: Array[Array[Int]]) = applyN(3, grid, rotateRight)
+
 
     describe("up") {
       def test = doTest(direction = 'up, _: Array[Array[Int]], _: Array[Array[Int]])
@@ -122,7 +167,7 @@ class TfeStateSpec extends FunSpec with Matchers {
         }
       }
 
-      describe("with non-adjacent, non equal tiles") {
+      describe("with non-adjacent, non-equal tiles") {
         it("should fill in the gaps") {
           test(
             Array(
