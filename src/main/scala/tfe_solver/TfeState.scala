@@ -71,7 +71,7 @@ class TfeState(val tiles: Array[Array[Int]]) extends GameState {
    * Create the GameState which would result from performing move
    * @param move
    */
-  override def transition(move: Symbol): GameState = {
+  override def transition(move: Symbol): TfeState = {
     val newGrid = up()
     // val newGrid = move match {
     //   case 'up => {up()}
