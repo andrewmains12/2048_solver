@@ -5,24 +5,17 @@ import org.apache.commons.lang3.StringUtils
 object Util {
 
   /**
-   * Apply fn n times, passing the output from the first application to the second and so on.
+   * Apply fn n times, passing the output from the first application to the second and so on, and return the value of
+   * the last application.
    * @param n
    * @param initial
    * @param fn
    * @tparam RetT
    */
   def applyN[RetT](n: Int, initial: RetT, fn: (RetT) => RetT): RetT = {
-
-    var curArg = initial
-
-    for (i <- 0.until(n)) {
-      curArg = fn(curArg)
-    }
-
-    return curArg
+    val fnApps = Iterator.iterate(initial)(fn).take(n).toVector
+    fnApps(fnApps.length - 1)
   }
-
-
 
   def rotateRight(grid: Array[Array[Int]]):Array[Array[Int]] =  {
     val rtn = Array.ofDim[Int](grid.length, grid(0).length)
@@ -69,10 +62,14 @@ object Util {
 
 
   def emptyGrid(height: Int = 3, width: Int = 3): Array[Array[Int]] = {
-    Array.fill(3, 3)(TfeState.EmptyTile)
+    Array.fill(height, width)(TfeState.EmptyTile)
   }
 
-  def pprint(grid: Array[Array[_]]) = {
+  def pprint(state: TfeState): Unit = {
+    pprint(state.tiles)
+  }
+
+  def pprint(grid: Array[Array[Int]]): Unit = {
 
     //Length of each cell is content length + padding
     val cellLengths = grid.map({row => row.map(_.toString.length).max + 2})

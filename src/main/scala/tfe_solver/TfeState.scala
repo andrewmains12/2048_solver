@@ -163,16 +163,15 @@ class TfeState(val tiles: Array[Array[Int]]) extends GameState {
    * @return a list of all moves possible from this state
    */
   override def possibleMoves(): List[Symbol] = {
-
     return gridView.iterWithIndex().filter(_._1 != TfeState.EmptyTile).flatMap(
       {case (tile, (i, j)) =>
-         (for ((dirName, move) <- TfeState.Directions.iterator if canMove(tile, (i, j), move))
+         for ((dirName, move) <- TfeState.Directions.iterator if canMove(tile, (i, j), move))
             yield dirName
-            )
-      }).toList
+
+      }).toSet.toList
   }
 
-  def canMove(tileVal: Int, curPos: Tuple2[Int, Int], move: Tuple2[Int, Int]): Boolean = {
+  def canMove(tileVal: Int, curPos: (Int, Int), move: (Int, Int)): Boolean = {
     val nextX = curPos._1 + move._1
     val nextY = curPos._2 + move._2
 

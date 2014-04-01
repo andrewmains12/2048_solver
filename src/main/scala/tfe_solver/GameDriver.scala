@@ -1,7 +1,13 @@
 package tfe_solver
 
-trait GameDriver {
+import solver.GameState
 
-  def move(direction: Symbol)
+trait GameDriver[FirstPlayerMove, SecondPlayerMove] {
+
+  def moveFirstPlayer(move: FirstPlayerMove): GameState
+
+  def moveSecondPlayer(move: SecondPlayerMove): GameState
+
+  def currentGameState(): GameState
 
 }

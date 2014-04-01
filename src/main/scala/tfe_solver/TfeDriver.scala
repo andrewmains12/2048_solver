@@ -1,14 +1,15 @@
 package tfe_solver
 
-import org.openqa.selenium.{WebElement, By, Keys, WebDriver}
+import org.openqa.selenium._
 import scala.collection.JavaConversions._
 
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.interactions.Actions
 import scala.sys.SystemProperties
 import solver.GameState
+import scala.Some
 
-class TfeDriver(var driver: WebDriver = null) extends GameDriver {
+class TfeDriver(var driver: WebDriver = null) extends GameDriver[Symbol, Null] {
 
   //TODO: config these, obviously
   val ChromeDriverLoc = "/Users/AMains/Downloads/chromedriver_mac32/chromedriver"
@@ -36,21 +37,72 @@ class TfeDriver(var driver: WebDriver = null) extends GameDriver {
     'right -> Keys.ARROW_RIGHT
   )
 
-  def move(direction: Symbol) = {
-    new Actions(driver).sendKeys(keyFor(direction)).perform()
+
+//  def mov(direction: Symbol, player: Symbol) = {
+//
+//
+//  }
+
+
+  override def currentGameState(): TfeState = {
+    var success = false
+    while (true) {
+      try {
+        return getCurrentGameState()
+      } catch {
+        case e:Exception => {
+
+        }
+      }
+    }
+
+    return new TfeState(Array.ofDim[Int](3, 3))
   }
 
   /**
    * Extract the current game state from the game
    * @return
    */
-  def currentGameState(): GameState = {
-    val tiles = driver.findElements(By.className("tile"))
+  def getCurrentGameState(): TfeState = {
+    val tiles = driver.findElements(By.className("tile")).map({ele =>
+      val classAttr = ele.getAttribute("class")
 
-    return new TfeState(Array.ofDim[Int](2,2))
-    //tiles.map({tile =>
-//      tile.
-//    }))
+      val PosPattern = """tile-position-(\d+)-(\d+)""".r
 
+      val MaxTries = 100
+      PosPattern.findFirstIn(classAttr) match {
+        case Some(PosPattern(i, j)) => {
+          //We do the opposite
+          var success = false
+          var tries = 0
+          var result = ((-1, -1), 1)
+          val innerEle = ele.findElement(By.className("tile-inner"))
+
+              //This guy 1-indexes his arrays, and marks his tiles with (col, row)
+          ((j.toInt - 1, i.toInt - 1), innerEle.getText.toInt)
+
+          }
+      }
+
+    })
+
+    val rtn = Util.emptyGrid(GameHeight, GameWidth)
+    for (((i, j), value) <- tiles) {
+      rtn(i)(j) = value
+    }
+
+    return new TfeState(rtn)
+  }
+
+  override def moveSecondPlayer(move: Null): TfeState = {
+    currentGameState()
+  }
+
+  override def moveFirstPlayer(move: Symbol): TfeState = {
+
+    new Actions(driver).
+      sendKeys(keyFor(move)).perform()
+//    new TfeState(Util.emptyGrid())
+    currentGameState()
   }
 }
