@@ -4,6 +4,10 @@ version := "0.1.0"
 
 scalaVersion := "2.10.0"
 
+fork in run := true
+
+javaOptions in run += "-Xprof"
+
 libraryDependencies ++= Seq(
   "org.scalatest" % "scalatest_2.10" % "2.1.0" % "test",
   "org.seleniumhq.selenium" % "selenium-java" % "2.41.0",

@@ -15,75 +15,7 @@ class TfeState(val tiles: Array[Array[Int]]) extends GameState {
 
   //should check for length here probably
   val width = tiles(0).length
-
-  /**
-   * Various ways of traversing the grid
-   */
-  class GridView(array: Array[Array[Int]]) {
-    //TODO: make the WithIndex bit a decorator/transformation
-    def transposedWithIndex(): Iterator[(Int, (Int, Int))] = {
-      for (
-        j <- 0.until(width).iterator;
-        i <- 0.until(height).iterator
-      ) yield (tiles(i)(j), (i, j))
-    }
-
-    def transposed(): Iterator[Int] = {
-      for (
-        j <- 0.until(width).iterator;
-        i <- 0.until(height).iterator
-      ) yield tiles(i)(j)
-    }
-
-    def iterWithIndex(): Iterator[(Int, (Int, Int))] = {
-      return for (
-        i <- 0.until(height).iterator;
-        j <- 0.until(width).iterator
-      )
-        yield (tiles(i)(j), (i, j))
-    }
-
-    def iter(): Iterator[Int] = {
-      for (
-        i <- 0.until(height).iterator;
-        j <- 0.until(width).iterator
-      )
-        yield tiles(i)(j)
-    }
-
-    def iterRows: Iterator[Seq[Int]] = {
-      for (
-        i <- 0.until(height).iterator
-      ) yield tiles(i)
-    }
-
-    def iterColumns: Iterator[Seq[Int]] = {
-      transposed().grouped(height)
-    }
-
-    def rotatedRight: Iterator[Iterator[Int]] = {
-      for (col <- iterColumns)
-        yield col.reverseIterator
-    }
-
-    def flipped: Iterator[Iterator[Int]] = {
-      for (row <- tiles.reverseIterator)
-        yield row.reverseIterator
-    }
-
-//    def flippedLeftRight: Iterator[Iterator[Int]] = {
-//      for
-//    }
-
-    def rotatedLeft: Iterator[Iterator[Int]] = {
-      for (j <- (width - 1).until(-1, -1).iterator)
-        yield
-          for (i <- 0.until(height).iterator)
-            yield tiles(i)(j)
-    }
-  }
-
-  val gridView = new GridView(tiles)
+  val gridView = GridView(tiles)
 
 
   /**
@@ -104,25 +36,34 @@ class TfeState(val tiles: Array[Array[Int]]) extends GameState {
    * @param move
    */
   override def transition(move: Symbol): TfeState = {
-    var newGrid = move match {
+    val newGrid = move match {
       case 'left => moveLeft(gridView.iterRows)
       case 'up => moveLeft(gridView.rotatedLeft)
-      case 'right => moveLeft(gridView.flipped)
+      case 'right => moveLeft(gridView.flippedLeftRight)
       case 'down => moveLeft(gridView.rotatedRight)
-    }
-
-    //Reverse the flipping from before
-    newGrid = move match {
-      case 'left => newGrid
-      case 'up => Util.rotateRight(newGrid)
-      case 'right => Util.flip(newGrid)
-      case 'down => Util.rotateLeft(newGrid)
     }
 
     // val newGrid = move match {
     //   case 'up => {up()}
     // }
-    return new TfeState(newGrid)
+    return new TfeState(
+      (move match {
+        case 'left => GridView(newGrid).iterRows
+        case 'up => GridView(newGrid).rotatedRight
+        case 'right => GridView(newGrid).flippedLeftRight
+        case 'down => GridView(newGrid).rotatedLeft
+      }).map(_.toArray).toArray
+    )
+  }
+
+  def moveSecondPlayer(move: (Int, (Int, Int))): TfeState = {
+    val (value, (x, y)) = move
+
+    val newTiles = tiles.clone()
+
+    newTiles(x)(y) = value
+
+    return new TfeState(newTiles)
   }
 
   /**

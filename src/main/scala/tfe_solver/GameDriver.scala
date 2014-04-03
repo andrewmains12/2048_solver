@@ -2,12 +2,16 @@ package tfe_solver
 
 import solver.GameState
 
-trait GameDriver[FirstPlayerMove, SecondPlayerMove] {
+trait GameDriver[FirstPlayerMove, SecondPlayerMove, StateClass <: GameState] {
 
-  def moveFirstPlayer(move: FirstPlayerMove): GameState
+  def moveFirstPlayer(move: FirstPlayerMove, curState: StateClass): StateClass
 
-  def moveSecondPlayer(move: SecondPlayerMove): GameState
+  def moveSecondPlayer(move: SecondPlayerMove, curState: StateClass): StateClass
 
-  def currentGameState(): GameState
+  def currentGameState(): StateClass
+
+  def quit() = {
+
+  }
 
 }

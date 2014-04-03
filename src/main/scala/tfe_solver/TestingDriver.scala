@@ -7,24 +7,25 @@ import solver.GameState
  * @param wrappedDriver
  * @param delay
  */
-class TestingDriver[FirstPlayerMove, SecondPlayerMove](wrappedDriver: GameDriver[FirstPlayerMove, SecondPlayerMove],
-                                                       delay: Long) extends GameDriver[FirstPlayerMove, SecondPlayerMove]
+class TestingDriver[FirstPlayerMove, SecondPlayerMove, StateClass <: GameState]
+  (wrappedDriver: GameDriver[FirstPlayerMove, SecondPlayerMove, StateClass],
+   delay: Long) extends GameDriver[FirstPlayerMove, SecondPlayerMove, StateClass]
 {
 
 //  override def move(direction: Symbol): Unit = {
 //      wrappedDriver.move(direction)
 //      Thread.sleep(delay)
 //  }
-  override def currentGameState(): GameState = {
+  override def currentGameState(): StateClass = {
     wrappedDriver.currentGameState()
   }
 
-  override def moveSecondPlayer(move: SecondPlayerMove): GameState = {
-    wrappedDriver.moveSecondPlayer(move)
+  override def moveSecondPlayer(move: SecondPlayerMove, currentState: StateClass): StateClass = {
+    wrappedDriver.moveSecondPlayer(move, currentState)
   }
 
-  override def moveFirstPlayer(move: FirstPlayerMove): GameState = {
-    val ret = wrappedDriver.moveFirstPlayer(move)
+  override def moveFirstPlayer(move: FirstPlayerMove, currentState: StateClass): StateClass = {
+    val ret = wrappedDriver.moveFirstPlayer(move, currentState)
     Thread.sleep(delay)
     return ret
   }

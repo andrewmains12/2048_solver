@@ -1,6 +1,7 @@
 package tfe_solver
 
 import org.apache.commons.lang3.StringUtils
+import scala.reflect.ClassTag
 
 object Util {
 
@@ -13,53 +14,11 @@ object Util {
    * @tparam RetT
    */
   def applyN[RetT](n: Int, initial: RetT, fn: (RetT) => RetT): RetT = {
-    val fnApps = Iterator.iterate(initial)(fn).take(n).toVector
-    fnApps(fnApps.length - 1)
+    Iterator.iterate(initial)(fn).zipWithIndex.
+      take(n).
+      dropWhile(_._2 < n - 1).
+      next()._1
   }
-
-  def rotateRight(grid: Array[Array[Int]]):Array[Array[Int]] =  {
-    val rtn = Array.ofDim[Int](grid.length, grid(0).length)
-
-    //transpose
-    for((row, i) <- grid.iterator.zipWithIndex;
-        (value, j) <- row.zipWithIndex
-    ) {
-      rtn(j)(i) = value
-    }
-
-    //reverse rows in place
-    for (row <- rtn.iterator)
-      reverseInPlace(row)
-
-    rtn
-  }
-
-  /**
-   * Reverse an array in place. Useful to prevent allocating rows all over the place for no reason.
-   * @param array
-   * @tparam T
-   */
-  def reverseInPlace[T](array: Array[T]) {
-    for (j <- 0.until(array.length / 2)) {
-      val tmp = array(j)
-      array(j) = array(array.length - j - 1)
-      array(array.length - j - 1) = tmp
-    }
-  }
-
-  /**
-   * Not efficient; goes by way of rotateRight 3 times. Doesn't matter for now
-   * @param grid
-   * @return
-   */
-  def rotateLeft(grid: Array[Array[Int]]) = applyN(3, grid, rotateRight)
-
-  /**
-   * Not efficient; goes by way of rotateRight twice. Doesn't matter for now
-   * @param grid
-   */
-  def flip(grid: Array[Array[Int]]) = applyN(2, grid, rotateRight)
-
 
   def emptyGrid(height: Int = 3, width: Int = 3): Array[Array[Int]] = {
     Array.fill(height, width)(TfeState.EmptyTile)
@@ -84,5 +43,18 @@ object Util {
       println(separator)
     }
     )
+  }
+
+  def retryUntilSuccess[R](fn: (() => R), maxTries: Int = 10): R = {
+    val (ret: Option[R], exception: Exception) = Iterator.continually(
+      try {
+        (Option(fn()), null)
+      } catch {
+        case e: Exception => {
+          (None, e)
+        }
+      }).zipWithIndex.dropWhile({ case((value, _), tries) => value.isEmpty && tries < maxTries}).next()._1
+
+    ret.getOrElse(throw exception)
   }
 }

@@ -5,13 +5,17 @@ import org.scalatest.{Matchers, FunSpec}
 trait TransitionBehaviors { this: FunSpec with Matchers =>
 
   def doTest(direction: Symbol, inputGrid: Array[Array[Int]], desiredGrid: Array[Array[Int]]) = {
+
+    //Examples are all from the perspective of a left-ward move; perform rotations to get examples
+    //for the other directions2
     val rotateGrid = {grid: Array[Array[Int]] =>
-      direction match {
-        case 'left => grid
-        case 'up => Util.rotateRight(grid)
-        case 'right => Util.flip(grid)
-        case 'down => Util.rotateLeft(grid)
-      }
+      val view = GridView(grid)
+      (direction match {
+        case 'left => view.iterRows
+        case 'up => view.rotatedRight
+        case 'right => view.flippedLeftRight
+        case 'down => view.rotatedLeft
+      }).map(_.toArray).toArray
     }
     new TfeState(rotateGrid(inputGrid)).transition(direction).tiles should equal(rotateGrid(desiredGrid))
   }
