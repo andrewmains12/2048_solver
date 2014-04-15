@@ -6,7 +6,7 @@ scalaVersion := "2.10.0"
 
 fork in run := true
 
-javaOptions in run += "-Xprof"
+//javaOptions in run += "-Xprof"
 
 libraryDependencies ++= Seq(
   "org.scalatest" % "scalatest_2.10" % "2.1.0" % "test",

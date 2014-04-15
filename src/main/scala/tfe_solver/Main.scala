@@ -6,7 +6,6 @@ object Main {
 
   def main(args: Array[String]): Unit = {
 
-    var moves = 0
     val driver = new TfeDriver()
 
     println("Instantiated driver")
@@ -16,7 +15,7 @@ object Main {
     try {
       var curState = driver.currentGameState()
 
-      while (! curState.gameOver() && moves < 100) {
+      while (! curState.gameOver()) {
         val move = brain.selectMove(curState)
 
         println(s"Selected move: $move")
@@ -24,7 +23,6 @@ object Main {
         Util.pprint(curState)
 
         curState = driver.moveSecondPlayer(null, curState)
-        moves += 1
       }
     }
     finally {

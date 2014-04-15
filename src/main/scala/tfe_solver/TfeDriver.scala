@@ -45,22 +45,7 @@ class TfeDriver(var driver: WebDriver = null) extends GameDriver[Symbol, Null, T
 //  }
 
 
-  override def currentGameState(): TfeState = {
-    var success = false
-    while (true) {
-      try {
-        return getCurrentGameState()
-      } catch {
-        case e:Exception => {
-          println("Failed to get state; retrying")
-        }
-      }
-    }
-
-    return new TfeState(Array.ofDim[Int](3, 3))
-  }
-
-
+  override def currentGameState(): TfeState = { Util.retryUntilSuccess(getCurrentGameState) }
 
   /**
    * Extract the current game state from the game
@@ -69,8 +54,6 @@ class TfeDriver(var driver: WebDriver = null) extends GameDriver[Symbol, Null, T
   def getCurrentGameState(): TfeState = {
     val tiles = driver.findElements(By.className("tile")).map({
       ele => (getPosition(ele), getValue(ele))})
-
-
 
     val rtn = Util.emptyGrid(GameHeight, GameWidth)
     for (((i, j), value) <- tiles) {
@@ -91,7 +74,7 @@ class TfeDriver(var driver: WebDriver = null) extends GameDriver[Symbol, Null, T
   def getPosition(tile: WebElement): (Int, Int) = {
     val classAttr = tile.getAttribute("class")
     PosPattern.findFirstIn(classAttr) match {
-      case Some(PosPattern(x, y)) => (x.toInt, y.toInt)
+      case Some(PosPattern(x, y)) => (x.toInt - 1, y.toInt - 1)
       case None =>
         throw new IllegalArgumentException(
         s"No position class ($PosPattern) in element. " +

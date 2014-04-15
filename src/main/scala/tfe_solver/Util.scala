@@ -46,15 +46,15 @@ object Util {
   }
 
   def retryUntilSuccess[R](fn: (() => R), maxTries: Int = 10): R = {
-    val (ret: Option[R], exception: Exception) = Iterator.continually(
+    val (ret: Option[R], exception: Option[Exception]) = Iterator.continually(
       try {
-        (Option(fn()), null)
+        (Option(fn()), None)
       } catch {
         case e: Exception => {
-          (None, e)
+          (None, Option(e))
         }
       }).zipWithIndex.dropWhile({ case((value, _), tries) => value.isEmpty && tries < maxTries}).next()._1
 
-    ret.getOrElse(throw exception)
+    ret.getOrElse(throw exception.get)
   }
 }
