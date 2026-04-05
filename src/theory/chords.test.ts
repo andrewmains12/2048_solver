@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
+
+import type { Chord } from '@/types'
+
 import { chordNotes, chordLabel, parseChordLabel, diatonicChords } from './chords'
 import { buildScale } from './scales'
-import type { Chord } from '@/types'
 
 // ---------------------------------------------------------------------------
 // Shared fixtures
@@ -49,15 +51,15 @@ describe('chordLabel', () => {
 // ---------------------------------------------------------------------------
 // parseChordLabel
 // ---------------------------------------------------------------------------
-describe('parseChordLabel', () => {
-  const candidates = diatonicChords(cMajorScale(), 2)
+const cMajorTier2Chords = () => diatonicChords(cMajorScale(), 2)
 
+describe('parseChordLabel', () => {
   it('finds a chord by its label', () => {
-    expect(parseChordLabel('G7', candidates)).toEqual(chord('G', 'dominant7'))
+    expect(parseChordLabel('G7', cMajorTier2Chords())).toEqual(chord('G', 'dominant7'))
   })
 
   it('returns null for an unknown label', () => {
-    expect(parseChordLabel('X', candidates)).toBeNull()
+    expect(parseChordLabel('X', cMajorTier2Chords())).toBeNull()
   })
 
   it('returns null for a chord not in the candidate list', () => {

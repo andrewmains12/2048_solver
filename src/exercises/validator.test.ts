@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { validateAnswer } from './validator'
+
 import type { Question } from '@/types'
+
+import { validateAnswer } from './validator'
 
 // ---------------------------------------------------------------------------
 // Fixtures

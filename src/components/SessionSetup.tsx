@@ -1,6 +1,6 @@
 import { useState } from 'react'
+
 import type { NoteName, SessionConfig, Tier } from '@/types'
-import { CHROMATIC_NOTES } from '@/theory'
 import { useSessionStore } from '@/store/sessionStore'
 import { playTonicCadence } from '@/audio'
 
@@ -10,9 +10,6 @@ const KEY_DISPLAY: Record<NoteName, string> = {
   C: 'C', 'C#': 'C#/Db', D: 'D', 'D#': 'D#/Eb', E: 'E', F: 'F',
   'F#': 'F#/Gb', G: 'G', 'G#': 'G#/Ab', A: 'A', 'A#': 'A#/Bb', B: 'B',
 }
-
-// silence unused import — CHROMATIC_NOTES used for key display
-void CHROMATIC_NOTES
 
 export function SessionSetup() {
   const [key, setKey] = useState<NoteName>('C')

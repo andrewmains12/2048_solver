@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { buildScale, isDiatonic, scaleDegree } from './scales'
+
 import type { Scale } from '@/types'
+
+import { buildScale, isDiatonic, scaleDegree } from './scales'
 
 // ---------------------------------------------------------------------------
 // Shared test fixtures

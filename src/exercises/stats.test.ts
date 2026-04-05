@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { createSessionStats, applyResult, accuracy } from './stats'
+
 import type { Result } from '@/types'
+
+import { createSessionStats, applyResult, accuracy } from './stats'
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -51,12 +53,16 @@ describe('applyResult', () => {
     const stats = applyResult(createSessionStats(), correctResult())
     expect(stats.totalQuestions).toBe(1)
     expect(stats.totalCorrect).toBe(1)
+    expect(stats.noteStats['B']).toEqual({ noteName: 'B', attempts: 1, correct: 1 })
+    expect(stats.chordStats['G7']).toEqual({ chordLabel: 'G7', attempts: 1, correct: 1 })
   })
 
   it('does not increment totalCorrect on a wrong result', () => {
     const stats = applyResult(createSessionStats(), wrongNoteResult())
     expect(stats.totalQuestions).toBe(1)
     expect(stats.totalCorrect).toBe(0)
+    expect(stats.noteStats['B']).toEqual({ noteName: 'B', attempts: 1, correct: 0 })
+    expect(stats.chordStats['G7']).toEqual({ chordLabel: 'G7', attempts: 1, correct: 1 })
   })
 
   it('tracks note stats correctly across multiple results', () => {
