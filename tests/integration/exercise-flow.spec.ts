@@ -119,10 +119,11 @@ test('score counter increments after each answer', async ({ page }) => {
   expect(score).toMatch(/\d+\/1/)
 })
 
-test('replay button is present on exercise screen', async ({ page }) => {
+test('play question and play tonic buttons are present on exercise screen', async ({ page }) => {
   await passAudioGate(page)
   await startSession(page)
   await expect(page.getByTestId('replay-btn')).toBeVisible()
+  await expect(page.getByTestId('play-tonic-btn')).toBeVisible()
 })
 
 test('end session button navigates to stats screen', async ({ page }) => {

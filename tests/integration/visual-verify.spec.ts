@@ -97,7 +97,7 @@ test('exercise screen shows note and chord button grids', async ({ page }) => {
   await startSession(page)
   await assertScreenLooksLike(
     page,
-    'A dark exercise screen with a header showing key and score, a "Play Again" button, a row of 7 note buttons (C D E F G A B), a grid of chord buttons, and a disabled Submit button.',
+    'A dark exercise screen with a header showing key and score, a "Tonic" button and a "Play Question" button, a row of 7 note buttons (C D E F G A B), a grid of chord buttons, and a disabled Submit button.',
     'exercise-screen',
   )
 })

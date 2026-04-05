@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import type { NoteName, SessionConfig, Tier } from '@/types'
+import type { NoteName, Tier } from '@/types'
 import { useSessionStore } from '@/store/sessionStore'
 import { playTonicCadence } from '@/audio'
 
@@ -17,9 +17,7 @@ export function SessionSetup() {
   const startSession = useSessionStore((s) => s.startSession)
 
   const handleStart = () => {
-    const config: SessionConfig = { key, tier }
-    playTonicCadence(key)
-    startSession(config)
+    startSession({ key, tier })
   }
 
   const handleKeyPreview = (k: NoteName) => {

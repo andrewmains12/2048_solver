@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 
 import type { ChordLabel, NoteName, Result } from '@/types'
 import { buildScale, diatonicChords } from '@/theory'
-import { playQuestion, replayQuestion, getContextState } from '@/audio'
+import { playQuestion, playTonicCadence, getContextState } from '@/audio'
 import { validateAnswer } from '@/exercises'
 import { useSessionStore } from '@/store/sessionStore'
 
@@ -20,19 +20,24 @@ export function ExerciseScreen() {
   const [lastResult, setLastResult] = useState<Result | null>(null)
   const [awaitingNext, setAwaitingNext] = useState(false)
 
-  const scale = config ? buildScale(config.key, 'major') : null
-  const chords = config && scale ? diatonicChords(scale, config.tier) : []
-  const notes: NoteName[] = scale ? [...scale.notes] : []
-
-  // Play question when it changes
+  // Reset selections when question changes (but do NOT auto-play — iOS requires user gesture)
   useEffect(() => {
     if (!currentQuestion) return
     setSelectedNote(null)
     setSelectedChord(null)
     setLastResult(null)
     setAwaitingNext(false)
-    playQuestion(currentQuestion.chord, currentQuestion.note)
   }, [currentQuestion])
+
+  const handlePlayQuestion = () => {
+    if (!currentQuestion) return
+    playQuestion(currentQuestion.chord, currentQuestion.note)
+  }
+
+  const handlePlayTonic = () => {
+    if (!config) return
+    playTonicCadence(config.key)
+  }
 
   const handleSubmit = useCallback(() => {
     if (!currentQuestion || !selectedNote || !selectedChord || awaitingNext) return
@@ -40,19 +45,14 @@ export function ExerciseScreen() {
     recordResult(result)
     setLastResult(result)
     setAwaitingNext(true)
-
-    setTimeout(() => {
-      nextQuestion()
-    }, FEEDBACK_DURATION_MS)
+    setTimeout(() => { nextQuestion() }, FEEDBACK_DURATION_MS)
   }, [currentQuestion, selectedNote, selectedChord, awaitingNext, recordResult, nextQuestion])
-
-  const handleReplay = () => {
-    if (!currentQuestion) return
-    replayQuestion(currentQuestion.chord, currentQuestion.note)
-  }
 
   if (!config || !currentQuestion) return null
 
+  const scale = buildScale(config.key, 'major')
+  const chords = diatonicChords(scale, config.tier)
+  const notes: NoteName[] = [...scale.notes]
   const canSubmit = selectedNote !== null && selectedChord !== null && !awaitingNext
 
   return (
@@ -83,13 +83,23 @@ export function ExerciseScreen() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col gap-5 p-4 pb-safe">
-        <button
-          onClick={handleReplay}
-          className="self-start flex items-center gap-2 py-2 px-4 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
-          data-testid="replay-btn"
-        >
-          ▶ Play Again
-        </button>
+        {/* Playback controls */}
+        <div className="flex gap-2">
+          <button
+            onClick={handlePlayTonic}
+            className="flex items-center gap-2 py-2 px-4 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
+            data-testid="play-tonic-btn"
+          >
+            ♩ Tonic
+          </button>
+          <button
+            onClick={handlePlayQuestion}
+            className="flex items-center gap-2 py-2 px-4 bg-brand-500 hover:bg-brand-600 rounded-lg text-sm font-semibold transition-colors"
+            data-testid="replay-btn"
+          >
+            ▶ Play Question
+          </button>
+        </div>
 
         <NoteSelector
           notes={notes}
