@@ -17,8 +17,14 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    /**
+     * webkit = actual WebKit engine (same as iOS Safari).
+     * Requires: npx playwright install webkit
+     * On Mac this exercises the real user-gesture + Web Audio restrictions
+     * that iOS enforces. Run with: npm run test:integration -- --project=webkit
+     */
     {
-      name: 'mobile-safari',
+      name: 'webkit',
       use: { ...devices['iPhone 14'] },
     },
   ],

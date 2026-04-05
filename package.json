@@ -12,6 +12,8 @@
     "test:ui": "vitest --ui",
     "test:integration": "playwright test",
     "test:integration:ui": "playwright test --ui",
+    "test:integration:webkit": "playwright test --project=webkit",
+    "test:integration:audio": "playwright test --grep audio",
     "lint": "tsc --noEmit",
     "deploy": "npm run build && gh-pages -d dist"
   },
