@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 
 import type { ChordLabel, NoteName, Result } from '@/types'
 import { buildScale, diatonicChords } from '@/theory'
-import { playQuestion, replayQuestion } from '@/audio'
+import { playQuestion, replayQuestion, getContextState } from '@/audio'
 import { validateAnswer } from '@/exercises'
 import { useSessionStore } from '@/store/sessionStore'
 
@@ -64,6 +64,13 @@ export function ExerciseScreen() {
         </span>
         <span className="text-sm text-white/60" data-testid="score-counter">
           {stats.totalCorrect}/{stats.totalQuestions}
+        </span>
+        <span
+          className="text-xs font-mono px-1 rounded"
+          style={{ color: getContextState() === 'running' ? '#86efac' : '#fca5a5' }}
+          data-testid="audio-state"
+        >
+          {getContextState()}
         </span>
         <button
           onClick={endSession}

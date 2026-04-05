@@ -4,20 +4,12 @@ import type { Chord, NoteName } from '@/types'
 import { chordNotes } from '@/theory'
 import { semitoneOf } from '@/theory/notes'
 
-/** Tone.js note string, e.g. "C4", "G#5" */
-type ToneNote = string
-
-const LOOKAHEAD = 0.05 // seconds — prevents notes scheduled at Tone.now() from being dropped
+const LOOKAHEAD = 0.05
 
 let synth: Tone.PolySynth | null = null
 let initialised = false
 
-/**
- * Converts a note + base octave to a Tone.js note string, bumping the octave
- * up by 1 if the note's semitone is lower than the root's semitone (so chord
- * tones always sit above the root within the same close-position voicing).
- */
-function toToneNote(note: NoteName, baseOctave: number, rootNote?: NoteName): ToneNote {
+function toToneNote(note: NoteName, baseOctave: number, rootNote?: NoteName): string {
   if (rootNote !== undefined && semitoneOf(note) < semitoneOf(rootNote)) {
     return `${note}${baseOctave + 1}`
   }
@@ -35,68 +27,82 @@ function getSynth(): Tone.PolySynth {
   return synth
 }
 
-/**
- * Must be called on a user gesture (tap/click) before any audio plays.
- * Satisfies iOS Safari Web Audio policy.
- */
+/** Ensures the audio context is running. Safe to call before any playback. */
+async function ensureRunning(): Promise<void> {
+  if (Tone.context.state !== 'running') {
+    console.warn('[audio] context state:', Tone.context.state, '— resuming')
+    await Tone.context.resume()
+  }
+}
+
 export async function initAudio(): Promise<void> {
   if (initialised) return
   await Tone.start()
-  // Belt-and-suspenders: ensure context is in running state
-  if (Tone.context.state !== 'running') {
-    await Tone.context.resume()
-  }
+  await ensureRunning()
+  // Warm up the audio graph on the user gesture so iOS doesn't suspend it
+  const s = getSynth()
+  s.triggerAttackRelease('C4', 0.001, Tone.now())
   initialised = true
+  console.info('[audio] initialised, context state:', Tone.context.state)
 }
 
 export function isAudioInitialised(): boolean {
   return initialised
 }
 
-/**
- * Plays the tonic chord arpeggiated to establish key context.
- * Notes staggered 150 ms apart, root in octave 3 for a full sound.
- */
-export function playTonicCadence(keyRoot: NoteName): void {
-  const tonicChord: Chord = { root: keyRoot, quality: 'major' }
-  const notes = chordNotes(tonicChord)
-  const s = getSynth()
-  const start = Tone.now() + LOOKAHEAD
-  notes.forEach((note, i) => {
-    s.triggerAttackRelease(toToneNote(note, 3, keyRoot), '2n', start + i * 0.18)
-  })
+export function getContextState(): string {
+  return Tone.context.state
 }
 
-/**
- * Plays a chord as a block (all notes simultaneously), then after a short
- * pause plays a single melody note above.
- */
+export function playTonicCadence(keyRoot: NoteName): void {
+  void (async () => {
+    try {
+      await ensureRunning()
+      const tonicChord: Chord = { root: keyRoot, quality: 'major' }
+      const notes = chordNotes(tonicChord)
+      const s = getSynth()
+      const start = Tone.now() + LOOKAHEAD
+      notes.forEach((note, i) => {
+        s.triggerAttackRelease(toToneNote(note, 3, keyRoot), '2n', start + i * 0.18)
+      })
+      console.info('[audio] playTonicCadence', keyRoot, 'at', start)
+    } catch (err) {
+      console.error('[audio] playTonicCadence failed:', err)
+    }
+  })()
+}
+
 export function playQuestion(
   chord: Chord,
   note: NoteName,
   onDone?: () => void,
 ): void {
-  const s = getSynth()
-  const notes = chordNotes(chord)
-  const toneNotes = notes.map((n) => toToneNote(n, 4, chord.root))
-  const melodyNote = toToneNote(note, 5)
+  void (async () => {
+    try {
+      await ensureRunning()
+      const s = getSynth()
+      const notes = chordNotes(chord)
+      const toneNotes = notes.map((n) => toToneNote(n, 4, chord.root))
+      const melodyNote = toToneNote(note, 5)
 
-  const start = Tone.now() + LOOKAHEAD
-  const chordDuration = 1.5
-  const pause = 0.35
-  const noteDuration = 1.5
+      const start = Tone.now() + LOOKAHEAD
+      const chordDuration = 1.5
+      const pause = 0.35
+      const noteDuration = 1.5
 
-  s.triggerAttackRelease(toneNotes, chordDuration, start)
-  s.triggerAttackRelease(melodyNote, noteDuration, start + chordDuration + pause)
+      s.triggerAttackRelease(toneNotes, chordDuration, start)
+      s.triggerAttackRelease(melodyNote, noteDuration, start + chordDuration + pause)
+      console.info('[audio] playQuestion chord:', toneNotes, 'note:', melodyNote, 'at', start)
 
-  if (onDone) {
-    setTimeout(onDone, (chordDuration + pause + noteDuration) * 1000)
-  }
+      if (onDone) {
+        setTimeout(onDone, (chordDuration + pause + noteDuration) * 1000)
+      }
+    } catch (err) {
+      console.error('[audio] playQuestion failed:', err)
+    }
+  })()
 }
 
-/**
- * Re-plays the chord + note without changing question state.
- */
 export function replayQuestion(chord: Chord, note: NoteName): void {
   playQuestion(chord, note)
 }
