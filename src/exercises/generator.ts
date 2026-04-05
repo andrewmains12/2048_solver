@@ -11,6 +11,7 @@ export function generateQuestion(config: SessionConfig): Question {
   const chords = diatonicChords(scale, config.tier)
   const notes: NoteName[] = [...scale.notes]
 
+  // TODO: add anti-repetition — pass previous Question and exclude same chord+note combo
   const chord = chords[Math.floor(Math.random() * chords.length)]
   const note = notes[Math.floor(Math.random() * notes.length)]
 
