@@ -1,4 +1,5 @@
 import * as Tone from 'tone'
+
 import type { Chord, NoteName } from '@/types'
 import { chordNotes } from '@/theory'
 

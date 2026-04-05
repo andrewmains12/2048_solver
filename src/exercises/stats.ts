@@ -1,4 +1,4 @@
-import type { ChordLabel, NoteName, Result, SessionStats } from '@/types'
+import type { ChordLabel, ChordStats, NoteName, Result, SessionStats } from '@/types'
 import { chordLabel } from '@/theory'
 
 export function createSessionStats(): SessionStats {
@@ -18,7 +18,7 @@ export function applyResult(stats: SessionStats, result: Result): SessionStats {
   const label = chordLabel(result.question.chord)
 
   const prevNote = stats.noteStats[note] ?? { noteName: note, attempts: 0, correct: 0 }
-  const prevChord: { chordLabel: ChordLabel; attempts: number; correct: number } =
+  const prevChord: ChordStats =
     stats.chordStats[label] ?? { chordLabel: label, attempts: 0, correct: 0 }
 
   return {

@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
+
 import type { ChordLabel, NoteName, Result } from '@/types'
 import { buildScale, diatonicChords } from '@/theory'
 import { playQuestion, replayQuestion } from '@/audio'
 import { validateAnswer } from '@/exercises'
 import { useSessionStore } from '@/store/sessionStore'
+
 import { NoteSelector } from './NoteSelector'
 import { ChordSelector } from './ChordSelector'
 import { Feedback } from './Feedback'
@@ -60,7 +62,7 @@ export function ExerciseScreen() {
         <span className="text-sm font-medium text-white/60">
           Key of {config.key} · Tier {config.tier}
         </span>
-        <span className="text-sm text-white/60">
+        <span className="text-sm text-white/60" data-testid="score-counter">
           {stats.totalCorrect}/{stats.totalQuestions}
         </span>
         <button

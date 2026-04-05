@@ -1,4 +1,5 @@
 import type { NoteName, Scale, ScaleType } from '@/types'
+
 import { transposeNote } from './notes'
 
 /** Semitone intervals from root for each scale type */

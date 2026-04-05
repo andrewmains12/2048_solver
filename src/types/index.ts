@@ -11,7 +11,7 @@ export type NoteName =
 // ---------------------------------------------------------------------------
 export type ScaleType = 'major' // minor keys are a future tier
 
-export interface Scale {
+export type Scale = {
   root: NoteName
   type: ScaleType
   /** The 7 diatonic pitch classes in ascending order */
@@ -32,7 +32,7 @@ export type ChordQuality =
   | 'halfDiminished7' // ø7
   | 'diminished7' // °7
 
-export interface Chord {
+export type Chord = {
   root: NoteName
   quality: ChordQuality
 }
@@ -71,19 +71,19 @@ export interface Result {
 // ---------------------------------------------------------------------------
 // Stats
 // ---------------------------------------------------------------------------
-export interface NoteStats {
+export type NoteStats = {
   noteName: NoteName
   attempts: number
   correct: number
 }
 
-export interface ChordStats {
+export type ChordStats = {
   chordLabel: ChordLabel
   attempts: number
   correct: number
 }
 
-export interface SessionStats {
+export type SessionStats = {
   totalQuestions: number
   totalCorrect: number
   noteStats: Record<NoteName, NoteStats>

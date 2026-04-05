@@ -25,9 +25,12 @@ describe('transposeNote', () => {
 })
 
 describe('normaliseNote', () => {
-  it('passes through canonical sharp names unchanged', () => {
-    expect(normaliseNote('C#')).toBe('C#')
-    expect(normaliseNote('F#')).toBe('F#')
+  it.each([
+    ['C', 'C'], ['C#', 'C#'], ['D', 'D'], ['D#', 'D#'],
+    ['E', 'E'], ['F', 'F'], ['F#', 'F#'], ['G', 'G'],
+    ['G#', 'G#'], ['A', 'A'], ['A#', 'A#'], ['B', 'B'],
+  ] as const)('passes through canonical name %s unchanged', (note, expected) => {
+    expect(normaliseNote(note)).toBe(expected)
   })
 
   it.each([

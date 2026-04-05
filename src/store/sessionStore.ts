@@ -1,11 +1,12 @@
 import { create } from 'zustand'
+
 import type { Question, Result, SessionConfig, SessionStats } from '@/types'
 import { generateQuestion } from '@/exercises/generator'
 import { applyResult, createSessionStats } from '@/exercises/stats'
 
 type Phase = 'setup' | 'playing' | 'complete'
 
-interface SessionState {
+type SessionState = {
   phase: Phase
   config: SessionConfig | null
   currentQuestion: Question | null

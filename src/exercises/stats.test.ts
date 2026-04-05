@@ -50,19 +50,21 @@ describe('createSessionStats', () => {
 // ---------------------------------------------------------------------------
 describe('applyResult', () => {
   it('increments totals on a correct result', () => {
-    const stats = applyResult(createSessionStats(), correctResult())
-    expect(stats.totalQuestions).toBe(1)
-    expect(stats.totalCorrect).toBe(1)
-    expect(stats.noteStats['B']).toEqual({ noteName: 'B', attempts: 1, correct: 1 })
-    expect(stats.chordStats['G7']).toEqual({ chordLabel: 'G7', attempts: 1, correct: 1 })
+    expect(applyResult(createSessionStats(), correctResult())).toEqual({
+      totalQuestions: 1,
+      totalCorrect: 1,
+      noteStats: { B: { noteName: 'B', attempts: 1, correct: 1 } },
+      chordStats: { G7: { chordLabel: 'G7', attempts: 1, correct: 1 } },
+    })
   })
 
   it('does not increment totalCorrect on a wrong result', () => {
-    const stats = applyResult(createSessionStats(), wrongNoteResult())
-    expect(stats.totalQuestions).toBe(1)
-    expect(stats.totalCorrect).toBe(0)
-    expect(stats.noteStats['B']).toEqual({ noteName: 'B', attempts: 1, correct: 0 })
-    expect(stats.chordStats['G7']).toEqual({ chordLabel: 'G7', attempts: 1, correct: 1 })
+    expect(applyResult(createSessionStats(), wrongNoteResult())).toEqual({
+      totalQuestions: 1,
+      totalCorrect: 0,
+      noteStats: { B: { noteName: 'B', attempts: 1, correct: 0 } },
+      chordStats: { G7: { chordLabel: 'G7', attempts: 1, correct: 1 } },
+    })
   })
 
   it('tracks note stats correctly across multiple results', () => {
@@ -70,10 +72,11 @@ describe('applyResult', () => {
     stats = applyResult(stats, correctResult())   // B correct
     stats = applyResult(stats, wrongNoteResult()) // B wrong
 
-    expect(stats.noteStats['B']).toEqual({
-      noteName: 'B',
-      attempts: 2,
-      correct: 1,
+    expect(stats).toEqual({
+      totalQuestions: 2,
+      totalCorrect: 1,
+      noteStats: { B: { noteName: 'B', attempts: 2, correct: 1 } },
+      chordStats: { G7: { chordLabel: 'G7', attempts: 2, correct: 2 } },
     })
   })
 
@@ -82,21 +85,20 @@ describe('applyResult', () => {
     stats = applyResult(stats, correctResult())    // G7 correct
     stats = applyResult(stats, wrongNoteResult())  // G7 correct (wrong note but right chord)
 
-    expect(stats.chordStats['G7']).toEqual({
-      chordLabel: 'G7',
-      attempts: 2,
-      correct: 2,
+    expect(stats).toEqual({
+      totalQuestions: 2,
+      totalCorrect: 1,
+      noteStats: { B: { noteName: 'B', attempts: 2, correct: 1 } },
+      chordStats: { G7: { chordLabel: 'G7', attempts: 2, correct: 2 } },
     })
   })
 
   it('tracks chord stats for wrong chord answers', () => {
-    let stats = createSessionStats()
-    stats = applyResult(stats, wrongChordResult()) // C wrong
-
-    expect(stats.chordStats['C']).toEqual({
-      chordLabel: 'C',
-      attempts: 1,
-      correct: 0,
+    expect(applyResult(createSessionStats(), wrongChordResult())).toEqual({
+      totalQuestions: 1,
+      totalCorrect: 0,
+      noteStats: { E: { noteName: 'E', attempts: 1, correct: 1 } },
+      chordStats: { C: { chordLabel: 'C', attempts: 1, correct: 0 } },
     })
   })
 

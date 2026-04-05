@@ -1,4 +1,5 @@
 import type { Chord, ChordLabel, ChordQuality, NoteName, Scale, Tier } from '@/types'
+
 import { transposeNote } from './notes'
 
 /** Semitone intervals from root for each chord quality */

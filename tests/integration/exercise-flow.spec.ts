@@ -99,18 +99,13 @@ test('score counter increments after each answer', async ({ page }) => {
   await passAudioGate(page)
   await startSession(page)
 
-  const scoreText = async () => {
-    const header = page.locator('[data-testid="exercise-screen"] .text-white\\/60').first()
-    return header.textContent()
-  }
-
   await page.getByTestId('note-selector').getByRole('button').first().click()
   await page.getByTestId('chord-selector').getByRole('button').first().click()
   await page.getByTestId('submit-btn').click()
 
   // Wait for next question to load
   await page.waitForTimeout(2200)
-  const score = await scoreText()
+  const score = await page.getByTestId('score-counter').textContent()
   expect(score).toMatch(/\d+\/1/)
 })
 
