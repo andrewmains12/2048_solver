@@ -1,4 +1,4 @@
-import type { ChordLabel, ChordStats, NoteName, Result, SessionStats } from '@/types'
+import type { ChordStats, NoteName, Result, SessionStats } from '@/types'
 import { chordLabel } from '@/theory'
 
 export function createSessionStats(): SessionStats {
