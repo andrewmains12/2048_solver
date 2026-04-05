@@ -1,14 +1,23 @@
 import { test, expect } from '@playwright/test'
 import { passAudioGate, startSession, getVisibleNoteLabels, getVisibleChordLabels } from './helpers'
 
-// Mock the audio engine so tests don't depend on Web Audio / speakers
+// Collect console errors so tests can assert no audio engine failures occurred.
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    // Stub Tone.js start and audio engine before app code runs
-    (window as unknown as Record<string, unknown>).__AUDIO_MOCKED__ = true
+  const errors: string[] = []
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') errors.push(msg.text())
   })
+  page.on('pageerror', (err) => errors.push(err.message))
+  ;(page as unknown as Record<string, unknown>).__consoleErrors = errors
+
   await page.goto('/')
 })
+
+/** Asserts no JS errors were thrown during the test (catches silent audio engine failures). */
+async function assertNoErrors(page: Parameters<typeof passAudioGate>[0]) {
+  const errors = (page as unknown as Record<string, unknown>).__consoleErrors as string[]
+  expect(errors, `Console errors: ${errors.join('; ')}`).toHaveLength(0)
+}
 
 test('audio gate is shown on first load', async ({ page }) => {
   await expect(page.getByTestId('audio-gate')).toBeVisible()
@@ -33,6 +42,7 @@ test('starting a C major tier 1 session shows exercise screen', async ({ page })
   await passAudioGate(page)
   await startSession(page, { key: 'C', tier: 1 })
   await expect(page.getByTestId('exercise-screen')).toBeVisible()
+  await assertNoErrors(page)
 })
 
 test('C major tier 1 shows exactly 7 diatonic note buttons', async ({ page }) => {
