@@ -1,0 +1,123 @@
+import { describe, it, expect } from 'vitest'
+import { createSessionStats, applyResult, accuracy } from './stats'
+import type { Result } from '@/types'
+
+// ---------------------------------------------------------------------------
+// Fixtures
+// ---------------------------------------------------------------------------
+const correctResult = (): Result => ({
+  question: { chord: { root: 'G', quality: 'dominant7' }, note: 'B' },
+  answer: { noteName: 'B', chordLabel: 'G7' },
+  noteCorrect: true,
+  chordCorrect: true,
+  correct: true,
+})
+
+const wrongNoteResult = (): Result => ({
+  question: { chord: { root: 'G', quality: 'dominant7' }, note: 'B' },
+  answer: { noteName: 'C', chordLabel: 'G7' },
+  noteCorrect: false,
+  chordCorrect: true,
+  correct: false,
+})
+
+const wrongChordResult = (): Result => ({
+  question: { chord: { root: 'C', quality: 'major' }, note: 'E' },
+  answer: { noteName: 'E', chordLabel: 'G7' },
+  noteCorrect: true,
+  chordCorrect: false,
+  correct: false,
+})
+
+// ---------------------------------------------------------------------------
+// createSessionStats
+// ---------------------------------------------------------------------------
+describe('createSessionStats', () => {
+  it('creates zeroed stats', () => {
+    expect(createSessionStats()).toEqual({
+      totalQuestions: 0,
+      totalCorrect: 0,
+      noteStats: {},
+      chordStats: {},
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// applyResult
+// ---------------------------------------------------------------------------
+describe('applyResult', () => {
+  it('increments totals on a correct result', () => {
+    const stats = applyResult(createSessionStats(), correctResult())
+    expect(stats.totalQuestions).toBe(1)
+    expect(stats.totalCorrect).toBe(1)
+  })
+
+  it('does not increment totalCorrect on a wrong result', () => {
+    const stats = applyResult(createSessionStats(), wrongNoteResult())
+    expect(stats.totalQuestions).toBe(1)
+    expect(stats.totalCorrect).toBe(0)
+  })
+
+  it('tracks note stats correctly across multiple results', () => {
+    let stats = createSessionStats()
+    stats = applyResult(stats, correctResult())   // B correct
+    stats = applyResult(stats, wrongNoteResult()) // B wrong
+
+    expect(stats.noteStats['B']).toEqual({
+      noteName: 'B',
+      attempts: 2,
+      correct: 1,
+    })
+  })
+
+  it('tracks chord stats for correct chord answers', () => {
+    let stats = createSessionStats()
+    stats = applyResult(stats, correctResult())    // G7 correct
+    stats = applyResult(stats, wrongNoteResult())  // G7 correct (wrong note but right chord)
+
+    expect(stats.chordStats['G7']).toEqual({
+      chordLabel: 'G7',
+      attempts: 2,
+      correct: 2,
+    })
+  })
+
+  it('tracks chord stats for wrong chord answers', () => {
+    let stats = createSessionStats()
+    stats = applyResult(stats, wrongChordResult()) // C wrong
+
+    expect(stats.chordStats['C']).toEqual({
+      chordLabel: 'C',
+      attempts: 1,
+      correct: 0,
+    })
+  })
+
+  it('is immutable — does not mutate the input stats object', () => {
+    const original = createSessionStats()
+    applyResult(original, correctResult())
+    expect(original).toEqual(createSessionStats())
+  })
+})
+
+// ---------------------------------------------------------------------------
+// accuracy
+// ---------------------------------------------------------------------------
+describe('accuracy', () => {
+  it('returns null when attempts is 0', () => {
+    expect(accuracy(0, 0)).toBeNull()
+  })
+
+  it('returns 1 for all correct', () => {
+    expect(accuracy(5, 5)).toBe(1)
+  })
+
+  it('returns 0 for all wrong', () => {
+    expect(accuracy(5, 0)).toBe(0)
+  })
+
+  it('returns ratio for partial correct', () => {
+    expect(accuracy(4, 3)).toBe(0.75)
+  })
+})
