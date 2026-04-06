@@ -14,10 +14,8 @@ const KEY_DISPLAY: Record<NoteName, string> = {
 export function SessionSetup() {
   const [key, setKey] = useState<NoteName>('C')
   const [tier, setTier] = useState<Tier>(1)
-  const { startSession, startDemo } = useSessionStore((s) => ({
-    startSession: s.startSession,
-    startDemo: s.startDemo,
-  }))
+  const startSession = useSessionStore((s) => s.startSession)
+  const startDemo = useSessionStore((s) => s.startDemo)
 
   const handleStart = () => {
     startSession({ key, tier })
