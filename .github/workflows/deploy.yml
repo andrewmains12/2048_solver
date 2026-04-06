@@ -1,15 +1,39 @@
-name: Deploy to GitHub Pages
+name: CI + Deploy to GitHub Pages
 
 on:
   push:
     branches: [master, 'claude/**']
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Integration tests (no visual)
+        run: npx playwright test --project=chromium --ignore=tests/integration/visual-verify.spec.ts
+
   deploy:
+    needs: test
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
