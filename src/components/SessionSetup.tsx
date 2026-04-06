@@ -14,7 +14,10 @@ const KEY_DISPLAY: Record<NoteName, string> = {
 export function SessionSetup() {
   const [key, setKey] = useState<NoteName>('C')
   const [tier, setTier] = useState<Tier>(1)
-  const startSession = useSessionStore((s) => s.startSession)
+  const { startSession, startDemo } = useSessionStore((s) => ({
+    startSession: s.startSession,
+    startDemo: s.startDemo,
+  }))
 
   const handleStart = () => {
     startSession({ key, tier })
@@ -80,6 +83,14 @@ export function SessionSetup() {
         data-testid="start-btn"
       >
         Start
+      </button>
+
+      <button
+        onClick={startDemo}
+        className="w-full max-w-sm py-3 bg-white/10 hover:bg-white/20 rounded-xl font-medium text-sm text-white/70 transition-colors mt-2"
+        data-testid="demo-btn"
+      >
+        ▶ Demo round
       </button>
     </div>
   )

@@ -4,7 +4,7 @@ import type { Question, Result, SessionConfig, SessionStats } from '@/types'
 import { generateQuestion } from '@/exercises/generator'
 import { applyResult, createSessionStats } from '@/exercises/stats'
 
-type Phase = 'setup' | 'playing' | 'complete'
+type Phase = 'setup' | 'playing' | 'complete' | 'demo'
 
 type SessionState = {
   phase: Phase
@@ -14,6 +14,7 @@ type SessionState = {
   audioReady: boolean
 
   setAudioReady: () => void
+  startDemo: () => void
   startSession: (config: SessionConfig) => void
   nextQuestion: () => void
   recordResult: (result: Result) => void
@@ -29,6 +30,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   audioReady: false,
 
   setAudioReady: () => set({ audioReady: true }),
+
+  startDemo: () => set({ phase: 'demo' }),
 
   startSession: (config: SessionConfig) => {
     const question = generateQuestion(config)

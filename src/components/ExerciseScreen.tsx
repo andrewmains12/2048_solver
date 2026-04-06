@@ -101,17 +101,17 @@ export function ExerciseScreen() {
           </button>
         </div>
 
-        <NoteSelector
-          notes={notes}
-          selected={selectedNote}
-          onSelect={setSelectedNote}
-          disabled={awaitingNext}
-        />
-
         <ChordSelector
           chords={chords}
           selected={selectedChord}
           onSelect={setSelectedChord}
+          disabled={awaitingNext}
+        />
+
+        <NoteSelector
+          notes={notes}
+          selected={selectedNote}
+          onSelect={setSelectedNote}
           disabled={awaitingNext}
         />
 
