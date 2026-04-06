@@ -42,6 +42,44 @@ docs/          Design and architecture documents
 - **Tests are DRY.** Factor shared setup into helpers. Assert on full return values, not fragments.
 - See [docs/testing.md](docs/testing.md) for full test conventions.
 
+## Verification Gate — Required Before Marking Work Ready for Human Review
+
+A change is **not** ready for human review until it has passed all four levels in order:
+
+### Level 1 — Unit tests
+```bash
+npm test
+```
+All Vitest tests must pass. Fix any failures before proceeding.
+
+### Level 2 — Integration tests
+```bash
+PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright test --project=chromium
+```
+All Playwright tests must pass (visual-verify tests may be skipped if `ANTHROPIC_API_KEY` is absent — that is handled at level 3 instead).
+
+**Environment note:** The pre-installed Playwright browser lives at `/opt/pw-browsers` but may be a different build number than the version in `package.json`. If Playwright cannot find its executable, create a symlink:
+```bash
+mkdir -p /opt/pw-browsers/chromium_headless_shell-<expected>/chrome-headless-shell-linux64
+ln -sf /opt/pw-browsers/chromium_headless_shell-<installed>/chrome-linux/headless_shell \
+       /opt/pw-browsers/chromium_headless_shell-<expected>/chrome-headless-shell-linux64/chrome-headless-shell
+```
+Find `<installed>` with `ls /opt/pw-browsers/` and `<expected>` from the error message.
+
+### Level 3 — Agent visual inspection
+After the dev server is running (`npm run dev`), use Playwright to take screenshots of:
+1. The audio gate screen
+2. The session setup screen (after tapping the gate)
+3. The exercise screen (after starting a C major Tier 1 session)
+4. The stats screen (after ending the session)
+
+Read each screenshot and verify it matches the expected layout described in `tests/integration/visual-verify.spec.ts`. If `ANTHROPIC_API_KEY` is set, run `npm run test:integration` — the visual-verify suite will do this automatically.
+
+Any screen that looks broken, blank, or wrong must be diagnosed and fixed before proceeding to level 4.
+
+### Level 4 — Human review
+Only after levels 1–3 pass: commit, push, and hand off to the human.
+
 ## Running the Project
 
 ```bash
