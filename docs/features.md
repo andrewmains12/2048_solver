@@ -79,6 +79,7 @@ Features required before the app is considered ready for regular phone use.
 - **Phone install (PWA)** — The "Add to Home Screen" / install-to-phone flow is not working correctly; needs end-to-end testing and any manifest/service-worker fixes required to make it reliable on iOS and Android.
 - **Help / intro** — New users have no onboarding. Need some form of first-run intro or persistent help screen explaining the exercise, controls, and scoring.
 - **Demo bug: plays all at once** — The demo mode currently triggers all audio simultaneously instead of sequencing questions. Root cause TBD; likely a scheduling/state issue in `DemoMode.tsx`.
+- **Abandon session** — Add an escape hatch to quit mid-session and return directly to setup, discarding the current stats. Distinct from "Done" (which ends the session and shows the stats screen). Useful when the user picks the wrong key or tier and wants to restart without sitting through the stats screen.
 
 ---
 
