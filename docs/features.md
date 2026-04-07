@@ -86,7 +86,7 @@ Features required before the app is considered ready for regular phone use.
 
 Nice-to-have improvements with no fixed milestone.
 
-- **Live score during a round** — Show a running correct/total counter (e.g. "7 / 10") on the exercise screen while a session is in progress.
+- ~~**Live score during a round**~~ — Already implemented (`score-counter` in the exercise screen header).
 - **All-time score tracking** — Persist session history (date, key, tier, score) across sessions, accessible from a stats/history screen.
 
 ---
