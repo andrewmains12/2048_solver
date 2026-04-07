@@ -70,6 +70,27 @@ Identification is **absolute** (real note/chord names), not Roman numeral / scal
 
 ---
 
+## Roadmap
+
+### Milestone: Usable MVP
+
+Features required before the app is considered ready for regular phone use.
+
+- **Phone install (PWA)** — The "Add to Home Screen" / install-to-phone flow is not working correctly; needs end-to-end testing and any manifest/service-worker fixes required to make it reliable on iOS and Android.
+- **Help / intro** — New users have no onboarding. Need some form of first-run intro or persistent help screen explaining the exercise, controls, and scoring.
+- **Demo bug: plays all at once** — The demo mode currently triggers all audio simultaneously instead of sequencing questions. Root cause TBD; likely a scheduling/state issue in `DemoMode.tsx`.
+
+---
+
+### Wishlist
+
+Nice-to-have improvements with no fixed milestone.
+
+- ~~**Live score during a round**~~ — Already implemented (`score-counter` in the exercise screen header).
+- **All-time score tracking** — Persist session history (date, key, tier, score) across sessions, accessible from a stats/history screen.
+
+---
+
 ## Planned / Future Features
 
 - **Relative degree mode** — Show scale degree (1–7 / do–ti) instead of absolute names
