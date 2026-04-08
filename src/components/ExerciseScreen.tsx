@@ -10,15 +10,13 @@ import { NoteSelector } from './NoteSelector'
 import { ChordSelector } from './ChordSelector'
 import { Feedback } from './Feedback'
 
-const FEEDBACK_DURATION_MS = 1800
-
 export function ExerciseScreen() {
   const { config, currentQuestion, recordResult, nextQuestion, endSession, stats } = useSessionStore()
 
   const [selectedNote, setSelectedNote] = useState<NoteName | null>(null)
   const [selectedChord, setSelectedChord] = useState<ChordLabel | null>(null)
   const [lastResult, setLastResult] = useState<Result | null>(null)
-  const [awaitingNext, setAwaitingNext] = useState(false)
+  const [hasSubmitted, setHasSubmitted] = useState(false)
 
   // Reset selections when question changes (but do NOT auto-play — iOS requires user gesture)
   useEffect(() => {
@@ -26,7 +24,7 @@ export function ExerciseScreen() {
     setSelectedNote(null)
     setSelectedChord(null)
     setLastResult(null)
-    setAwaitingNext(false)
+    setHasSubmitted(false)
   }, [currentQuestion])
 
   const handlePlayQuestion = () => {
@@ -40,20 +38,23 @@ export function ExerciseScreen() {
   }
 
   const handleSubmit = useCallback(() => {
-    if (!currentQuestion || !selectedNote || !selectedChord || awaitingNext) return
+    if (!currentQuestion || !selectedNote || !selectedChord) return
     const result = validateAnswer(currentQuestion, { noteName: selectedNote, chordLabel: selectedChord })
-    recordResult(result)
+    if (!hasSubmitted) {
+      recordResult(result)
+      setHasSubmitted(true)
+    }
     setLastResult(result)
-    setAwaitingNext(true)
-    setTimeout(() => { nextQuestion() }, FEEDBACK_DURATION_MS)
-  }, [currentQuestion, selectedNote, selectedChord, awaitingNext, recordResult, nextQuestion])
+  }, [currentQuestion, selectedNote, selectedChord, hasSubmitted, recordResult])
+
+  const handleNext = () => nextQuestion()
 
   if (!config || !currentQuestion) return null
 
   const scale = buildScale(config.key, 'major')
   const chords = diatonicChords(scale, config.tier)
   const notes: NoteName[] = [...scale.notes]
-  const canSubmit = selectedNote !== null && selectedChord !== null && !awaitingNext
+  const canSubmit = selectedNote !== null && selectedChord !== null
 
   return (
     <div className="min-h-screen bg-brand-900 text-white flex flex-col" data-testid="exercise-screen">
@@ -105,18 +106,34 @@ export function ExerciseScreen() {
           chords={chords}
           selected={selectedChord}
           onSelect={setSelectedChord}
-          disabled={awaitingNext}
         />
 
         <NoteSelector
           notes={notes}
           selected={selectedNote}
           onSelect={setSelectedNote}
-          disabled={awaitingNext}
         />
 
-        {lastResult ? (
-          <Feedback result={lastResult} />
+        {lastResult && <Feedback result={lastResult} />}
+
+        {hasSubmitted ? (
+          <div className="flex gap-2">
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className="flex-1 py-4 bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-bold text-lg transition-colors"
+              data-testid="check-again-btn"
+            >
+              Check again
+            </button>
+            <button
+              onClick={handleNext}
+              className="flex-1 py-4 bg-brand-500 hover:bg-brand-600 rounded-xl font-bold text-lg transition-colors"
+              data-testid="next-btn"
+            >
+              Next →
+            </button>
+          </div>
         ) : (
           <button
             onClick={handleSubmit}
