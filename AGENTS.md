@@ -13,9 +13,14 @@ The core exercise: hear a key established by a tonic chord → hear a diatonic c
 All design and architecture docs live in `docs/`. Run `ls docs/` to see what's
 available — filenames are self-documenting.
 
-`docs/features.md` is the canonical home for **feature specs, status, and in-flight
-progress**. When implementing a feature, keep the relevant section there up to date:
-mark it shipped when done, document known issues and TODOs while in progress.
+**Conventions:**
+- `docs/features.md` — high-level status table + brief spec for each feature; links
+  to per-feature detail docs
+- `docs/<feature>.md` — created for any feature with meaningful in-flight complexity;
+  holds progress notes, known issues, and TODOs while work is active
+
+When implementing a feature: update `docs/features.md` to reflect shipped/in-progress
+status, and keep the feature's own detail doc current with issues and remaining work.
 
 ## Repository Layout
 
