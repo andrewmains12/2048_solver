@@ -17,6 +17,7 @@ The core exercise: hear a key established by a tonic chord → hear a diatonic c
 | [docs/architecture.md](docs/architecture.md) | Tech stack decisions, module map, data flow |
 | [docs/audio-engine.md](docs/audio-engine.md) | Tone.js design, chord voicing, synthesis approach |
 | [docs/testing.md](docs/testing.md) | Test strategy, conventions, AI-in-the-loop harness |
+| [docs/voice-mode.md](docs/voice-mode.md) | Voice input feature — progress, known issues, TODO |
 
 ## Repository Layout
 
