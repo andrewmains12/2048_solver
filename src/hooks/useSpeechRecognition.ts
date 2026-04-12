@@ -1,16 +1,53 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-export type RecognitionState = 'unsupported' | 'idle' | 'listening' | 'error'
+// ---------------------------------------------------------------------------
+// Local type declarations for the Web Speech API.
+// TypeScript's lib.dom.d.ts only ships SpeechRecognitionAlternative and
+// SpeechRecognitionResult — the recognition class itself, its event types,
+// and the webkit-prefixed variant are absent. We declare exactly what we need.
+// ---------------------------------------------------------------------------
 
-// Detect Web Speech API — available on Chrome, Edge, and iOS Safari 14.5+ (as webkitSpeechRecognition)
-function getSpeechRecognitionClass(): (new () => SpeechRecognition) | null {
-  if (typeof window === 'undefined') return null
-  return (
-    (window as unknown as Record<string, unknown>).SpeechRecognition ??
-    (window as unknown as Record<string, unknown>).webkitSpeechRecognition ??
-    null
-  ) as (new () => SpeechRecognition) | null
+interface SpeechRecognitionEvent extends Event {
+  readonly results: SpeechRecognitionResultList
 }
+
+interface SpeechRecognitionErrorEvent extends Event {
+  readonly error: string
+}
+
+interface ISpeechRecognition extends EventTarget {
+  lang: string
+  continuous: boolean
+  interimResults: boolean
+  maxAlternatives: number
+  onstart: (() => void) | null
+  onresult: ((event: SpeechRecognitionEvent) => void) | null
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null
+  onend: (() => void) | null
+  start(): void
+  abort(): void
+}
+
+type SpeechRecognitionConstructor = new () => ISpeechRecognition
+
+// ---------------------------------------------------------------------------
+// API detection
+// ---------------------------------------------------------------------------
+
+// Detect Web Speech API — available on Chrome, Edge, and iOS Safari 14.5+
+// (as webkitSpeechRecognition). Not in TypeScript's standard DOM lib, so we
+// access it via window cast.
+function getSpeechRecognitionClass(): SpeechRecognitionConstructor | null {
+  if (typeof window === 'undefined') return null
+  const w = window as unknown as Record<string, unknown>
+  return (w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null) as SpeechRecognitionConstructor | null
+}
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
+export type RecognitionState = 'unsupported' | 'idle' | 'listening' | 'error'
 
 export interface UseSpeechRecognitionResult {
   state: RecognitionState
@@ -28,7 +65,7 @@ export function useSpeechRecognition(
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // Keep refs so we never capture stale values in recognition callbacks
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const recognitionRef = useRef<ISpeechRecognition | null>(null)
   const onTranscriptRef = useRef(onTranscript)
   useEffect(() => {
     onTranscriptRef.current = onTranscript
