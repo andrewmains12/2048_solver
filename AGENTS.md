@@ -42,6 +42,15 @@ docs/          Design and architecture documents
 - **Tests are DRY.** Factor shared setup into helpers. Assert on full return values, not fragments.
 - See [docs/testing.md](docs/testing.md) for full test conventions.
 
+## Features List
+
+`docs/features.md` is the authoritative record of what is planned, in progress, and done.
+
+- **At the start of any task:** read `docs/features.md` to understand current status and priorities.
+- **At the end of any task:** update `docs/features.md` to reflect what changed — mark completed items with ~~strikethrough~~, add new gaps discovered, update status notes on in-progress items. This update goes in the same commit as the code changes.
+
+---
+
 ## Verification Gate — Required Before Marking Work Ready for Human Review
 
 A change is **not** ready for human review until it has passed all four levels in order:

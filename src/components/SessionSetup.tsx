@@ -18,17 +18,11 @@ export function SessionSetup() {
   const [showIOSInstructions, setShowIOSInstructions] = useState(false)
   const startSession = useSessionStore((s) => s.startSession)
   const startDemo = useSessionStore((s) => s.startDemo)
-  const { canPrompt, isIOS, isInstalled, triggerInstall } = useInstallPrompt()
+  const { isIOS, isInstalled } = useInstallPrompt()
 
-  const handleInstall = () => {
-    if (isIOS) {
-      setShowIOSInstructions(true)
-    } else {
-      triggerInstall()
-    }
-  }
+  const handleInstall = () => setShowIOSInstructions(true)
 
-  const showInstallButton = !isInstalled && (canPrompt || isIOS)
+  const showInstallButton = !isInstalled && isIOS
 
   const handleStart = () => {
     startSession({ key, tier })
