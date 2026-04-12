@@ -59,13 +59,23 @@ PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright test --project=chromium
 ```
 All Playwright tests must pass (visual-verify tests may be skipped if `ANTHROPIC_API_KEY` is absent — that is handled at level 3 instead).
 
-**Environment note:** The pre-installed Playwright browser lives at `/opt/pw-browsers` but may be a different build number than the version in `package.json`. If Playwright cannot find its executable, create a symlink:
+**Environment note — chromium:** The pre-installed Playwright browser lives at `/opt/pw-browsers` but may be a different build number than the version in `package.json`. If Playwright cannot find its executable, create a symlink:
 ```bash
 mkdir -p /opt/pw-browsers/chromium_headless_shell-<expected>/chrome-headless-shell-linux64
 ln -sf /opt/pw-browsers/chromium_headless_shell-<installed>/chrome-linux/headless_shell \
        /opt/pw-browsers/chromium_headless_shell-<expected>/chrome-headless-shell-linux64/chrome-headless-shell
 ```
 Find `<installed>` with `ls /opt/pw-browsers/` and `<expected>` from the error message.
+
+**Environment note — webkit:** WebKit is not pre-installed. Install it once after cloning (requires sudo for system deps on Linux):
+```bash
+npm run install:browsers   # installs chromium + webkit with all system dependencies
+```
+After installing, run the webkit suite to verify iOS Safari behaviour:
+```bash
+npx playwright test --project=webkit
+```
+CI (GitHub Actions) installs both browsers automatically via the `Install Playwright browsers` step in `deploy.yml` — webkit failures in CI mean a real cross-browser regression, not a missing binary.
 
 ### Level 3 — Agent visual inspection
 After the dev server is running (`npm run dev`), use Playwright to take screenshots of:
