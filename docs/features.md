@@ -76,9 +76,8 @@ Identification is **absolute** (real note/chord names), not Roman numeral / scal
 
 Features required before the app is considered ready for regular phone use.
 
-- **Phone install (PWA)** — The "Add to Home Screen" / install-to-phone flow is not working correctly; needs end-to-end testing and any manifest/service-worker fixes required to make it reliable on iOS and Android.
+- **Phone install (PWA)** — Install UI is implemented: `useInstallPrompt` hook detects iOS vs. Android, `SessionSetup` shows an "Add to Home Screen" button with an iOS instructions overlay. PWA manifest and service-worker registration are configured in `vite.config.ts`. **Remaining gap:** icon assets (`pwa-192x192.png`, `pwa-512x512.png`, `apple-touch-icon.png`, `favicon.svg`) are not yet present in `public/`; end-to-end install flow has not been verified on a real iOS or Android device.
 - **Help / intro** — New users have no onboarding. Need some form of first-run intro or persistent help screen explaining the exercise, controls, and scoring.
-- **Demo bug: plays all at once** — The demo mode currently triggers all audio simultaneously instead of sequencing questions. Root cause TBD; likely a scheduling/state issue in `DemoMode.tsx`.
 
 ---
 
@@ -87,7 +86,8 @@ Features required before the app is considered ready for regular phone use.
 Nice-to-have improvements with no fixed milestone.
 
 - ~~**Live score during a round**~~ — Already implemented (`score-counter` in the exercise screen header).
-- **All-time score tracking** — Persist session history (date, key, tier, score) across sessions, accessible from a stats/history screen.
+- ~~**Demo bug: plays all at once**~~ — Fixed. `DemoMode.tsx` now plays tonic cadence, then chord + note, then simulates answer selection in a properly timed sequence.
+- **All-time score tracking** — Persist session history (date, key, tier, score) across sessions, accessible from a stats/history screen. Currently stats live in Zustand only and are discarded on session reset.
 
 ---
 
