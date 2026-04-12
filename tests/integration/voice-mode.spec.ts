@@ -106,26 +106,38 @@ test.describe('voice mode', () => {
     await expect(page.getByTestId('voice-btn')).toContainText('Listening')
   })
 
-  test('"D minor" transcript selects D note and Dm chord (tier 1)', async ({ page }) => {
+  test('"D minor" fills chord Dm but leaves note empty (waits for next segment)', async ({ page }) => {
     await injectMockSpeechRecognition(page)
     await setup(page, 1)
 
     await page.getByTestId('voice-btn').click()
     await triggerVoiceResult(page, 'D minor')
 
-    await expect(page.getByTestId('note-btn-D')).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByTestId('chord-btn-Dm')).toHaveAttribute('aria-pressed', 'true')
+    // Note should NOT be auto-filled from chord root
+    await expect(page.getByTestId('note-btn-D')).toHaveAttribute('aria-pressed', 'false')
   })
 
-  test('"G seven" transcript selects G note and G7 chord (tier 2)', async ({ page }) => {
+  test('"D minor E" fills both chord Dm and note E', async ({ page }) => {
+    await injectMockSpeechRecognition(page)
+    await setup(page, 1)
+
+    await page.getByTestId('voice-btn').click()
+    await triggerVoiceResult(page, 'D minor E')
+
+    await expect(page.getByTestId('chord-btn-Dm')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByTestId('note-btn-E')).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  test('"G seven" fills chord G7 but leaves note empty (tier 2)', async ({ page }) => {
     await injectMockSpeechRecognition(page)
     await setup(page, 2)
 
     await page.getByTestId('voice-btn').click()
     await triggerVoiceResult(page, 'G seven')
 
-    await expect(page.getByTestId('note-btn-G')).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByTestId('chord-btn-G7')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByTestId('note-btn-G')).toHaveAttribute('aria-pressed', 'false')
   })
 
   test('chord + separate melody note across two segments ("G seven" then "B")', async ({ page }) => {

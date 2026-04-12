@@ -172,10 +172,12 @@ export function parseVoiceTranscript(
       const parsedChordLabel = availableChordLabels.includes(label) ? label : undefined
       // Look for a trailing melody note: "C major A" → melody note is A, not C
       const melodyMatch = matchPrefix(qualityMatch.rest, NOTE_ALIASES)
-      return {
-        noteName: melodyMatch ? melodyMatch.value : chordRoot,
-        chordLabel: parsedChordLabel,
+      if (melodyMatch) {
+        // "C major A" — explicit melody note after quality
+        return { noteName: melodyMatch.value, chordLabel: parsedChordLabel }
       }
+      // "C major" only — fill chord, leave note for the next segment
+      return { chordLabel: parsedChordLabel }
     }
     // Note only — no quality heard
     return { noteName: chordRoot }

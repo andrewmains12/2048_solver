@@ -10,63 +10,39 @@ const TIER2_LABELS = ['CΔ7', 'Dm7', 'Em7', 'FΔ7', 'G7', 'Am7', 'Bø7']
 
 describe('parseVoiceTranscript', () => {
   // ---------------------------------------------------------------------------
-  // Note + quality (note-first order)
+  // Note + quality only (no trailing melody note) — fills chord, leaves note empty
   // ---------------------------------------------------------------------------
 
-  it('parses note + major quality ("C major")', () => {
-    expect(parseVoiceTranscript('C major', TIER1_LABELS)).toEqual({
-      noteName: 'C',
-      chordLabel: 'C',
-    })
+  it('"C major" fills chord only — note left for next segment', () => {
+    expect(parseVoiceTranscript('C major', TIER1_LABELS)).toEqual({ chordLabel: 'C' })
   })
 
-  it('parses note + minor quality ("D minor")', () => {
-    expect(parseVoiceTranscript('D minor', TIER1_LABELS)).toEqual({
-      noteName: 'D',
-      chordLabel: 'Dm',
-    })
+  it('"D minor" fills chord only', () => {
+    expect(parseVoiceTranscript('D minor', TIER1_LABELS)).toEqual({ chordLabel: 'Dm' })
   })
 
-  it('parses note + diminished quality ("B diminished")', () => {
-    expect(parseVoiceTranscript('B diminished', TIER1_LABELS)).toEqual({
-      noteName: 'B',
-      chordLabel: 'B°',
-    })
+  it('"B diminished" fills chord only', () => {
+    expect(parseVoiceTranscript('B diminished', TIER1_LABELS)).toEqual({ chordLabel: 'B°' })
   })
 
-  it('parses note + dominant seventh ("G seven")', () => {
-    expect(parseVoiceTranscript('G seven', TIER2_LABELS)).toEqual({
-      noteName: 'G',
-      chordLabel: 'G7',
-    })
+  it('"G seven" fills chord only (tier 2)', () => {
+    expect(parseVoiceTranscript('G seven', TIER2_LABELS)).toEqual({ chordLabel: 'G7' })
   })
 
-  it('parses note + major seventh ("C major seven")', () => {
-    expect(parseVoiceTranscript('C major seven', TIER2_LABELS)).toEqual({
-      noteName: 'C',
-      chordLabel: 'CΔ7',
-    })
+  it('"C major seven" fills chord only (tier 2)', () => {
+    expect(parseVoiceTranscript('C major seven', TIER2_LABELS)).toEqual({ chordLabel: 'CΔ7' })
   })
 
-  it('parses note + minor seventh ("D minor seven")', () => {
-    expect(parseVoiceTranscript('D minor seven', TIER2_LABELS)).toEqual({
-      noteName: 'D',
-      chordLabel: 'Dm7',
-    })
+  it('"D minor seven" fills chord only (tier 2)', () => {
+    expect(parseVoiceTranscript('D minor seven', TIER2_LABELS)).toEqual({ chordLabel: 'Dm7' })
   })
 
-  it('parses note + half diminished ("B half diminished")', () => {
-    expect(parseVoiceTranscript('B half diminished', TIER2_LABELS)).toEqual({
-      noteName: 'B',
-      chordLabel: 'Bø7',
-    })
+  it('"B half diminished" fills chord only (tier 2)', () => {
+    expect(parseVoiceTranscript('B half diminished', TIER2_LABELS)).toEqual({ chordLabel: 'Bø7' })
   })
 
-  it('parses "dominant seventh" as dominant quality', () => {
-    expect(parseVoiceTranscript('G dominant seventh', TIER2_LABELS)).toEqual({
-      noteName: 'G',
-      chordLabel: 'G7',
-    })
+  it('"G dominant seventh" fills chord only (tier 2)', () => {
+    expect(parseVoiceTranscript('G dominant seventh', TIER2_LABELS)).toEqual({ chordLabel: 'G7' })
   })
 
   // ---------------------------------------------------------------------------
@@ -113,11 +89,8 @@ describe('parseVoiceTranscript', () => {
     })
   })
 
-  it('chord only (no trailing note) still returns chord root as noteName ("C major")', () => {
-    expect(parseVoiceTranscript('C major', TIER1_LABELS)).toEqual({
-      noteName: 'C',
-      chordLabel: 'C',
-    })
+  it('chord only (no trailing note) does NOT fill noteName — leaves it for next segment', () => {
+    expect(parseVoiceTranscript('C major', TIER1_LABELS)).toEqual({ chordLabel: 'C' })
   })
 
   // ---------------------------------------------------------------------------
@@ -159,7 +132,7 @@ describe('parseVoiceTranscript', () => {
   it('does not return chordLabel when the chord is not in the available set', () => {
     // G7 is only in Tier 2; Tier 1 just has "G" (major triad)
     const result = parseVoiceTranscript('G seven', TIER1_LABELS)
-    expect(result.noteName).toBe('G')
+    expect(result.noteName).toBeUndefined()
     expect(result.chordLabel).toBeUndefined()
   })
 
@@ -193,15 +166,13 @@ describe('parseVoiceTranscript', () => {
   // ---------------------------------------------------------------------------
 
   it('is case-insensitive ("D MINOR")', () => {
-    expect(parseVoiceTranscript('D MINOR', TIER1_LABELS)).toEqual({
-      noteName: 'D',
-      chordLabel: 'Dm',
-    })
+    // No trailing note → chord only
+    expect(parseVoiceTranscript('D MINOR', TIER1_LABELS)).toEqual({ chordLabel: 'Dm' })
   })
 
-  it('is case-insensitive ("g SEVEN")', () => {
-    expect(parseVoiceTranscript('g SEVEN', TIER2_LABELS)).toEqual({
-      noteName: 'G',
+  it('is case-insensitive with trailing note ("g SEVEN b")', () => {
+    expect(parseVoiceTranscript('g SEVEN b', TIER2_LABELS)).toEqual({
+      noteName: 'B',
       chordLabel: 'G7',
     })
   })
@@ -211,16 +182,10 @@ describe('parseVoiceTranscript', () => {
   // ---------------------------------------------------------------------------
 
   it('half diminished seven is not confused with plain diminished', () => {
-    expect(parseVoiceTranscript('B half diminished seven', TIER2_LABELS)).toEqual({
-      noteName: 'B',
-      chordLabel: 'Bø7',
-    })
+    expect(parseVoiceTranscript('B half diminished seven', TIER2_LABELS)).toEqual({ chordLabel: 'Bø7' })
   })
 
   it('plain diminished is correctly parsed when that is said', () => {
-    expect(parseVoiceTranscript('B diminished', TIER1_LABELS)).toEqual({
-      noteName: 'B',
-      chordLabel: 'B°',
-    })
+    expect(parseVoiceTranscript('B diminished', TIER1_LABELS)).toEqual({ chordLabel: 'B°' })
   })
 })
