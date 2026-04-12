@@ -26,10 +26,13 @@ jobs:
         run: npm test
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
 
-      - name: Integration tests (no visual)
+      - name: Integration tests (chromium)
         run: npx playwright test --project=chromium
+
+      - name: Integration tests (webkit / iOS Safari)
+        run: npx playwright test --project=webkit
 
   deploy:
     needs: test

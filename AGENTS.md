@@ -8,15 +8,19 @@ A Progressive Web App (PWA) for ear training, inspired by GNU Solfege and functi
 
 The core exercise: hear a key established by a tonic chord → hear a diatonic chord → hear a single note played over it → identify the note name and the chord name.
 
-## Documentation Index
+## Documentation
 
-| Document | Contents |
-|---|---|
-| [docs/features.md](docs/features.md) | Full feature spec, exercise types, difficulty tiers |
-| [docs/design.md](docs/design.md) | UX flow, screen layouts, interaction model |
-| [docs/architecture.md](docs/architecture.md) | Tech stack decisions, module map, data flow |
-| [docs/audio-engine.md](docs/audio-engine.md) | Tone.js design, chord voicing, synthesis approach |
-| [docs/testing.md](docs/testing.md) | Test strategy, conventions, AI-in-the-loop harness |
+All design and architecture docs live in `docs/`. Run `ls docs/` to see what's
+available — filenames are self-documenting.
+
+**Conventions:**
+- `docs/features.md` — high-level status table + brief spec for each feature; links
+  to per-feature detail docs
+- `docs/<feature>.md` — created for any feature with meaningful in-flight complexity;
+  holds progress notes, known issues, and TODOs while work is active
+
+When implementing a feature: update `docs/features.md` to reflect shipped/in-progress
+status, and keep the feature's own detail doc current with issues and remaining work.
 
 ## Repository Layout
 
@@ -46,11 +50,12 @@ docs/          Design and architecture documents
 
 A change is **not** ready for human review until it has passed all four levels in order:
 
-### Level 1 — Unit tests
+### Level 1 — Type check + unit tests
 ```bash
-npm test
+npm run lint && npm test
 ```
-All Vitest tests must pass. Fix any failures before proceeding.
+`npm run lint` runs `tsc --noEmit` — catches type errors that Vitest misses
+(Vitest transpiles with esbuild and skips type checking). Both must pass before proceeding.
 
 ### Level 2 — Integration tests
 ```bash
@@ -58,13 +63,23 @@ PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright test --project=chromium
 ```
 All Playwright tests must pass (visual-verify tests may be skipped if `ANTHROPIC_API_KEY` is absent — that is handled at level 3 instead).
 
-**Environment note:** The pre-installed Playwright browser lives at `/opt/pw-browsers` but may be a different build number than the version in `package.json`. If Playwright cannot find its executable, create a symlink:
+**Environment note — chromium:** The pre-installed Playwright browser lives at `/opt/pw-browsers` but may be a different build number than the version in `package.json`. If Playwright cannot find its executable, create a symlink:
 ```bash
 mkdir -p /opt/pw-browsers/chromium_headless_shell-<expected>/chrome-headless-shell-linux64
 ln -sf /opt/pw-browsers/chromium_headless_shell-<installed>/chrome-linux/headless_shell \
        /opt/pw-browsers/chromium_headless_shell-<expected>/chrome-headless-shell-linux64/chrome-headless-shell
 ```
 Find `<installed>` with `ls /opt/pw-browsers/` and `<expected>` from the error message.
+
+**Environment note — webkit:** WebKit is not pre-installed. Install it once after cloning (requires sudo for system deps on Linux):
+```bash
+npm run install:browsers   # installs chromium + webkit with all system dependencies
+```
+After installing, run the webkit suite to verify iOS Safari behaviour:
+```bash
+npx playwright test --project=webkit
+```
+CI (GitHub Actions) installs both browsers automatically via the `Install Playwright browsers` step in `deploy.yml` — webkit failures in CI mean a real cross-browser regression, not a missing binary.
 
 ### Level 3 — Agent visual inspection
 After the dev server is running (`npm run dev`), use Playwright to take screenshots of:

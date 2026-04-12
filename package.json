@@ -15,6 +15,7 @@
     "test:integration:webkit": "playwright test --project=webkit",
     "test:integration:audio": "playwright test --grep audio",
     "lint": "tsc --noEmit",
+    "install:browsers": "playwright install --with-deps chromium webkit",
     "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {

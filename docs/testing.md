@@ -19,9 +19,13 @@ src/
     generator.test.ts
     validator.test.ts
     stats.test.ts
+  lib/
+    voiceParser.test.ts       Voice transcript parser
 tests/
   integration/
     exercise-flow.spec.ts     Core exercise flow (Playwright)
+    audio-validation.spec.ts  Web Audio API oscillator spy (Playwright)
+    voice-mode.spec.ts        Voice input with mocked Speech API (Playwright)
     visual-verify.spec.ts     AI-in-the-loop visual verification (Playwright + Claude API)
 ```
 
@@ -130,3 +134,20 @@ Without the key set, the visual verification tests skip gracefully.
 ## Audio Testing
 
 Tone.js / Web Audio is stubbed in unit tests (`src/test-setup.ts`). Integration tests mock the audio engine module so tests don't depend on speaker output. Audio correctness is validated by inspecting the note/chord values passed to the engine, not by listening.
+
+## Feature Implementation Checklist
+
+For every new user-facing feature, the following must exist before the work is considered done:
+
+1. **Type check + unit tests**: run `npm run lint && npm test`. `npm run lint` runs `tsc --noEmit` and must pass — Vitest uses esbuild which skips type checking, so type errors only surface at build time unless you run `tsc` explicitly. Unit tests (Vitest, colocated with the source file) cover any pure logic introduced — parsers, validators, generators, helpers. Follow the full-value assertion and parameterised-test patterns above.
+
+2. **Playwright E2E tests** (`tests/integration/<feature>.spec.ts`) covering:
+   - Happy path: the feature works end-to-end as intended
+   - Degraded path: the feature fails gracefully (API absent, permission denied, network error)
+   - Regression check: no adjacent behaviour is broken
+
+3. **Browser API mocking via `page.addInitScript()`** for any feature that depends on a browser API not available in headless Chromium (Web Speech, Notifications, Camera, Geolocation, etc.). Use the oscillator spy in `audio-validation.spec.ts` and the Speech API mock in `voice-mode.spec.ts` as reference patterns. "It's hard to mock" is not an acceptable reason to skip Playwright coverage — mock the API.
+
+4. **Agent visual inspection** (Level 3 in AGENTS.md): take Playwright screenshots of every new UI state introduced by the feature and verify they look correct before marking work ready for human review. Logic tests do not catch layout breaks, missing elements, or wrong visual states.
+
+Skipping any of the above levels requires an explicit, documented reason. The default is: all four levels must pass.

@@ -1,8 +1,34 @@
-# Feature Specification
+# Features
+
+## Status Overview
+
+| Feature | Status |
+|---|---|
+| Core exercise — note + chord identification | Shipped |
+| Tier 1 triads + Tier 2 seventh chords | Shipped |
+| Key selection (all 12 major keys) | Shipped |
+| Pure-synthesis audio via Tone.js | Shipped |
+| Replay + tonic cadence playback | Shipped |
+| Per-session score counter | Shipped |
+| PWA manifest + offline support | Shipped |
+| **Voice input mode** | In progress — see below |
+| Phone install (PWA) | MVP blocker |
+| Help / intro screen | MVP blocker |
+| Demo bug: plays all at once | MVP blocker |
+| All-time score tracking | Wishlist |
+| Relative degree mode | Planned |
+| Minor keys | Planned |
+| Chord progressions | Planned |
+| Intervals | Planned |
+| Chord / note only modes | Planned |
+| Tier 3 — chromatic notes | Planned |
+
+---
 
 ## Core Exercise: Note + Chord Identification
 
-The primary exercise trains the user to identify both a diatonic chord and a melody note played over it, in the context of an established key.
+The primary exercise trains the user to identify both a diatonic chord and a melody
+note played over it, in the context of an established key.
 
 ### Exercise Flow
 
@@ -70,9 +96,14 @@ Identification is **absolute** (real note/chord names), not Roman numeral / scal
 
 ---
 
-## Roadmap
+## Voice Input Mode
 
-### Milestone: Usable MVP
+Speak note + chord answers instead of tapping. Targets iOS Safari 14.5+ and Chrome.
+See [`docs/voice-mode.md`](voice-mode.md) for progress, known issues, and TODOs.
+
+---
+
+## Roadmap — MVP Blockers
 
 Features required before the app is considered ready for regular phone use.
 
@@ -82,7 +113,7 @@ Features required before the app is considered ready for regular phone use.
 
 ---
 
-### Wishlist
+## Wishlist
 
 Nice-to-have improvements with no fixed milestone.
 
