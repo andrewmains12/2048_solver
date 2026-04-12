@@ -8,16 +8,14 @@ A Progressive Web App (PWA) for ear training, inspired by GNU Solfege and functi
 
 The core exercise: hear a key established by a tonic chord → hear a diatonic chord → hear a single note played over it → identify the note name and the chord name.
 
-## Documentation Index
+## Documentation
 
-| Document | Contents |
-|---|---|
-| [docs/features.md](docs/features.md) | Full feature spec, exercise types, difficulty tiers |
-| [docs/design.md](docs/design.md) | UX flow, screen layouts, interaction model |
-| [docs/architecture.md](docs/architecture.md) | Tech stack decisions, module map, data flow |
-| [docs/audio-engine.md](docs/audio-engine.md) | Tone.js design, chord voicing, synthesis approach |
-| [docs/testing.md](docs/testing.md) | Test strategy, conventions, AI-in-the-loop harness |
-| [docs/voice-mode.md](docs/voice-mode.md) | Voice input feature — progress, known issues, TODO |
+All design and architecture docs live in `docs/`. Run `ls docs/` to see what's
+available — filenames are self-documenting.
+
+`docs/features.md` is the canonical home for **feature specs, status, and in-flight
+progress**. When implementing a feature, keep the relevant section there up to date:
+mark it shipped when done, document known issues and TODOs while in progress.
 
 ## Repository Layout
 
