@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
 
 import type { ChordLabel, NoteName, Result } from '@/types'
-import { buildScale, diatonicChords } from '@/theory'
+import { buildScale, diatonicChords, chordLabel } from '@/theory'
 import { playQuestion, playTonicCadence, getContextState } from '@/audio'
 import { validateAnswer } from '@/exercises'
 import { useSessionStore } from '@/store/sessionStore'
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
+import { parseVoiceTranscript } from '@/lib/voiceParser'
 
 import { NoteSelector } from './NoteSelector'
 import { ChordSelector } from './ChordSelector'
@@ -26,6 +28,30 @@ export function ExerciseScreen() {
     setLastResult(null)
     setHasSubmitted(false)
   }, [currentQuestion])
+
+  // Derived values — computed unconditionally so they can be used in hooks below.
+  // These evaluate to empty/null when config is not yet set (before session starts).
+  const scale = config ? buildScale(config.key, 'major') : null
+  const chords = scale && config ? diatonicChords(scale, config.tier) : []
+  const notes: NoteName[] = scale ? [...scale.notes] : []
+  const availableChordLabels = chords.map((c) => chordLabel(c))
+
+  // Voice input — hook must be called unconditionally (Rules of Hooks)
+  const handleVoiceTranscript = useCallback(
+    (transcript: string) => {
+      const parsed = parseVoiceTranscript(transcript, availableChordLabels)
+      if (parsed.noteName && notes.includes(parsed.noteName)) setSelectedNote(parsed.noteName)
+      if (parsed.chordLabel) setSelectedChord(parsed.chordLabel)
+    },
+    // availableChordLabels and notes change each render when config changes, but
+    // the callback identity only matters for the recognition event — it's stored
+    // via ref inside the hook so stale-closure is not a concern.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [availableChordLabels.join(','), notes.join(',')],
+  )
+
+  const { state: voiceState, errorMessage: voiceError, toggle: toggleVoice } =
+    useSpeechRecognition(handleVoiceTranscript)
 
   const handlePlayQuestion = () => {
     if (!currentQuestion) return
@@ -49,12 +75,18 @@ export function ExerciseScreen() {
 
   const handleNext = () => nextQuestion()
 
-  if (!config || !currentQuestion) return null
+  if (!config || !currentQuestion || !scale) return null
 
-  const scale = buildScale(config.key, 'major')
-  const chords = diatonicChords(scale, config.tier)
-  const notes: NoteName[] = [...scale.notes]
   const canSubmit = selectedNote !== null && selectedChord !== null
+
+  const voiceTitle =
+    voiceState === 'unsupported'
+      ? 'Voice input requires Safari 14.5+ or Chrome'
+      : voiceState === 'error'
+        ? (voiceError ?? 'Speech recognition error — tap to retry')
+        : voiceState === 'listening'
+          ? 'Stop listening'
+          : 'Speak your answer (note + chord)'
 
   return (
     <div className="min-h-screen bg-brand-900 text-white flex flex-col" data-testid="exercise-screen">
@@ -84,7 +116,7 @@ export function ExerciseScreen() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col gap-5 p-4 pb-safe">
-        {/* Playback controls */}
+        {/* Playback controls + voice toggle */}
         <div className="flex gap-2">
           <button
             onClick={handlePlayTonic}
@@ -99,6 +131,27 @@ export function ExerciseScreen() {
             data-testid="replay-btn"
           >
             ▶ Play Question
+          </button>
+
+          {/* Mic / voice toggle */}
+          <button
+            onClick={voiceState !== 'unsupported' ? toggleVoice : undefined}
+            disabled={voiceState === 'unsupported'}
+            title={voiceTitle}
+            aria-label={voiceState === 'listening' ? 'Stop listening' : 'Start voice input'}
+            className={[
+              'ml-auto flex items-center gap-1.5 py-2 px-3 rounded-lg text-sm font-medium transition-colors',
+              voiceState === 'unsupported'
+                ? 'opacity-40 cursor-not-allowed bg-white/10'
+                : voiceState === 'listening'
+                  ? 'bg-brand-500 animate-pulse'
+                  : voiceState === 'error'
+                    ? 'bg-red-700/60 hover:bg-red-700/80'
+                    : 'bg-white/10 hover:bg-white/20',
+            ].join(' ')}
+            data-testid="voice-btn"
+          >
+            🎤{voiceState === 'listening' ? ' Listening…' : ''}
           </button>
         </div>
 
