@@ -180,6 +180,17 @@ test.describe('voice mode', () => {
     await expect(page.getByTestId('voice-btn')).not.toContainText('Listening')
   })
 
+  test('transcript display shows what was heard after recognition', async ({ page }) => {
+    await injectMockSpeechRecognition(page)
+    await setup(page)
+
+    await page.getByTestId('voice-btn').click()
+    await triggerVoiceResult(page, 'D minor')
+
+    // Transcript line should show the recognised text in quotes
+    await expect(page.getByTestId('voice-transcript')).toContainText('D minor')
+  })
+
   test('mic button is disabled when Speech API is absent', async ({ page }) => {
     // Explicitly remove both Speech API globals before navigation
     await removeSpeechRecognition(page)

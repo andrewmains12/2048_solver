@@ -52,6 +52,8 @@ export type RecognitionState = 'unsupported' | 'idle' | 'listening' | 'error'
 export interface UseSpeechRecognitionResult {
   state: RecognitionState
   errorMessage: string | null
+  /** Live transcript: interim text while listening, last final text when idle. */
+  transcript: string
   toggle: () => void
 }
 
@@ -63,6 +65,9 @@ export function useSpeechRecognition(
 
   const [state, setState] = useState<RecognitionState>(isSupported ? 'idle' : 'unsupported')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  // Persists after recognition ends so the user can see what was heard.
+  // Cleared when a new session starts.
+  const [transcript, setTranscript] = useState('')
 
   // Keep refs so we never capture stale values in recognition callbacks
   const recognitionRef = useRef<ISpeechRecognition | null>(null)
@@ -85,24 +90,35 @@ export function useSpeechRecognition(
     // continuous: true so a natural pause mid-answer ("C major … A") doesn't
     // end the session — all segments are accumulated into one transcript.
     recognition.continuous = true
-    recognition.interimResults = false
+    // interimResults: true gives live word-by-word updates for the debug display.
+    // Final results still drive the parser; interim results only update the UI.
+    recognition.interimResults = true
     recognition.maxAlternatives = 1
 
     recognition.onstart = () => {
       setState('listening')
       setErrorMessage(null)
+      setTranscript('')  // clear previous session on fresh start
     }
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // Concatenate every final segment received so far in this session so that
-      // "C major" (segment 1) + "A" (segment 2) becomes "C major A".
-      let accumulated = ''
+      let finalText = ''
+      let interimText = ''
+
       for (let i = 0; i < event.results.length; i++) {
+        const segment = event.results[i][0].transcript
         if (event.results[i].isFinal) {
-          accumulated += (accumulated ? ' ' : '') + event.results[i][0].transcript
+          finalText += (finalText ? ' ' : '') + segment
+        } else {
+          interimText += segment
         }
       }
-      onTranscriptRef.current(accumulated.trim())
+
+      // Live display: finals + current interim (interim shown trailing)
+      setTranscript(interimText ? `${finalText} ${interimText}` : finalText)
+
+      // Only pass final text to the parser — interim results are too unstable
+      if (finalText) onTranscriptRef.current(finalText.trim())
     }
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -143,5 +159,5 @@ export function useSpeechRecognition(
     }
   }, [])
 
-  return { state, errorMessage, toggle }
+  return { state, errorMessage, transcript, toggle }
 }

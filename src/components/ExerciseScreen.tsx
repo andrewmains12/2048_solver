@@ -50,7 +50,7 @@ export function ExerciseScreen() {
     [availableChordLabels.join(','), notes.join(',')],
   )
 
-  const { state: voiceState, errorMessage: voiceError, toggle: toggleVoice } =
+  const { state: voiceState, errorMessage: voiceError, transcript: voiceTranscript, toggle: toggleVoice } =
     useSpeechRecognition(handleVoiceTranscript)
 
   const handlePlayQuestion = () => {
@@ -167,10 +167,13 @@ export function ExerciseScreen() {
           </button>
         </div>
 
-        {/* Inline voice error — title tooltip is invisible on touch */}
-        {voiceInlineError && (
-          <p className="text-xs text-red-400 -mt-3 text-right" data-testid="voice-error">
-            {voiceInlineError}
+        {/* Live transcript + inline error — both invisible via title tooltip on touch */}
+        {(voiceTranscript || voiceInlineError) && (
+          <p
+            className={`text-xs font-mono -mt-3 text-right ${voiceInlineError ? 'text-red-400' : 'text-white/40'}`}
+            data-testid="voice-transcript"
+          >
+            {voiceInlineError ?? `"${voiceTranscript}"`}
           </p>
         )}
 
