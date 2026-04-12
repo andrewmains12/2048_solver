@@ -20,15 +20,6 @@ export function ExerciseScreen() {
   const [lastResult, setLastResult] = useState<Result | null>(null)
   const [hasSubmitted, setHasSubmitted] = useState(false)
 
-  // Reset selections when question changes (but do NOT auto-play — iOS requires user gesture)
-  useEffect(() => {
-    if (!currentQuestion) return
-    setSelectedNote(null)
-    setSelectedChord(null)
-    setLastResult(null)
-    setHasSubmitted(false)
-  }, [currentQuestion])
-
   // Derived values — computed unconditionally so they can be used in hooks below.
   // These evaluate to empty/null when config is not yet set (before session starts).
   const scale = config ? buildScale(config.key, 'major') : null
@@ -50,8 +41,18 @@ export function ExerciseScreen() {
     [availableChordLabels.join(','), notes.join(',')],
   )
 
-  const { state: voiceState, errorMessage: voiceError, transcript: voiceTranscript, toggle: toggleVoice } =
+  const { state: voiceState, errorMessage: voiceError, transcript: voiceTranscript, toggle: toggleVoice, reset: resetVoice } =
     useSpeechRecognition(handleVoiceTranscript)
+
+  // Reset selections when question changes (but do NOT auto-play — iOS requires user gesture)
+  useEffect(() => {
+    if (!currentQuestion) return
+    setSelectedNote(null)
+    setSelectedChord(null)
+    setLastResult(null)
+    setHasSubmitted(false)
+    resetVoice()
+  }, [currentQuestion, resetVoice])
 
   const handlePlayQuestion = () => {
     if (!currentQuestion) return

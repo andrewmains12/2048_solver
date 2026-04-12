@@ -69,7 +69,7 @@ async function triggerVoiceResult(page: Page, transcript: string): Promise<void>
     // Mimic the real SpeechRecognitionResultList shape: results[i].isFinal and results[i][0].transcript
     const alternative = { transcript: t, confidence: 1 }
     const result = Object.assign([alternative], { isFinal: true })
-    r.onresult?.({ results: [result] })
+    r.onresult?.({ results: [result], resultIndex: 0 })
     r.onend?.()
   }, transcript)
 }
