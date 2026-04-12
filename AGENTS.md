@@ -46,11 +46,12 @@ docs/          Design and architecture documents
 
 A change is **not** ready for human review until it has passed all four levels in order:
 
-### Level 1 — Unit tests
+### Level 1 — Type check + unit tests
 ```bash
-npm test
+npm run lint && npm test
 ```
-All Vitest tests must pass. Fix any failures before proceeding.
+`npm run lint` runs `tsc --noEmit` — catches type errors that Vitest misses
+(Vitest transpiles with esbuild and skips type checking). Both must pass before proceeding.
 
 ### Level 2 — Integration tests
 ```bash

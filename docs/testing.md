@@ -139,7 +139,7 @@ Tone.js / Web Audio is stubbed in unit tests (`src/test-setup.ts`). Integration 
 
 For every new user-facing feature, the following must exist before the work is considered done:
 
-1. **Unit tests** (Vitest, colocated with the source file) for any pure logic introduced — parsers, validators, generators, helpers. Follow the full-value assertion and parameterised-test patterns above.
+1. **Type check + unit tests**: run `npm run lint && npm test`. `npm run lint` runs `tsc --noEmit` and must pass — Vitest uses esbuild which skips type checking, so type errors only surface at build time unless you run `tsc` explicitly. Unit tests (Vitest, colocated with the source file) cover any pure logic introduced — parsers, validators, generators, helpers. Follow the full-value assertion and parameterised-test patterns above.
 
 2. **Playwright E2E tests** (`tests/integration/<feature>.spec.ts`) covering:
    - Happy path: the feature works end-to-end as intended
