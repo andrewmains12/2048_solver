@@ -82,7 +82,9 @@ export function useSpeechRecognition(
 
     const recognition = new SpeechRecognitionClass()
     recognition.lang = 'en-US'
-    recognition.continuous = false
+    // continuous: true so a natural pause mid-answer ("C major … A") doesn't
+    // end the session — all segments are accumulated into one transcript.
+    recognition.continuous = true
     recognition.interimResults = false
     recognition.maxAlternatives = 1
 
@@ -92,8 +94,15 @@ export function useSpeechRecognition(
     }
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = event.results[0]?.[0]?.transcript ?? ''
-      onTranscriptRef.current(transcript)
+      // Concatenate every final segment received so far in this session so that
+      // "C major" (segment 1) + "A" (segment 2) becomes "C major A".
+      let accumulated = ''
+      for (let i = 0; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          accumulated += (accumulated ? ' ' : '') + event.results[i][0].transcript
+        }
+      }
+      onTranscriptRef.current(accumulated.trim())
     }
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {

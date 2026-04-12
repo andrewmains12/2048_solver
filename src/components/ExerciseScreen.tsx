@@ -82,11 +82,23 @@ export function ExerciseScreen() {
   const voiceTitle =
     voiceState === 'unsupported'
       ? 'Voice input requires Safari 14.5+ or Chrome'
-      : voiceState === 'error'
-        ? (voiceError ?? 'Speech recognition error — tap to retry')
-        : voiceState === 'listening'
-          ? 'Stop listening'
-          : 'Speak your answer (note + chord)'
+      : voiceState === 'listening'
+        ? 'Stop listening'
+        : 'Speak your answer (note + chord)'
+
+  // Human-readable inline error — title tooltip is invisible on touch devices
+  const voiceInlineError =
+    voiceState === 'error'
+      ? voiceError === 'not-allowed' || voiceError === 'service-not-allowed'
+        ? 'Mic access denied — allow it in Settings › Safari'
+        : voiceError === 'audio-capture'
+          ? 'No microphone found'
+          : voiceError === 'network'
+            ? 'Network error — speech recognition needs Wi-Fi or cellular'
+            : voiceError === 'no-speech'
+              ? 'No speech detected — tap to try again'
+              : `Mic error — tap to retry`
+      : null
 
   return (
     <div className="min-h-screen bg-brand-900 text-white flex flex-col" data-testid="exercise-screen">
@@ -154,6 +166,13 @@ export function ExerciseScreen() {
             🎤{voiceState === 'listening' ? ' Listening…' : ''}
           </button>
         </div>
+
+        {/* Inline voice error — title tooltip is invisible on touch */}
+        {voiceInlineError && (
+          <p className="text-xs text-red-400 -mt-3 text-right" data-testid="voice-error">
+            {voiceInlineError}
+          </p>
+        )}
 
         <ChordSelector
           chords={chords}

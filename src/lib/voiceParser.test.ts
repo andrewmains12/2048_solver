@@ -88,6 +88,39 @@ describe('parseVoiceTranscript', () => {
   })
 
   // ---------------------------------------------------------------------------
+  // Note + quality + trailing melody note ("C major A", "G seven B")
+  // This is the natural speech pattern: name the chord then the melody note.
+  // ---------------------------------------------------------------------------
+
+  it('parses chord + trailing melody note ("D minor E")', () => {
+    expect(parseVoiceTranscript('D minor E', TIER1_LABELS)).toEqual({
+      noteName: 'E',
+      chordLabel: 'Dm',
+    })
+  })
+
+  it('parses chord + trailing melody note ("G seven B", tier 2)', () => {
+    expect(parseVoiceTranscript('G seven B', TIER2_LABELS)).toEqual({
+      noteName: 'B',
+      chordLabel: 'G7',
+    })
+  })
+
+  it('parses chord + trailing melody note where note differs from chord root ("C major A")', () => {
+    expect(parseVoiceTranscript('C major A', TIER1_LABELS)).toEqual({
+      noteName: 'A',
+      chordLabel: 'C',
+    })
+  })
+
+  it('chord only (no trailing note) still returns chord root as noteName ("C major")', () => {
+    expect(parseVoiceTranscript('C major', TIER1_LABELS)).toEqual({
+      noteName: 'C',
+      chordLabel: 'C',
+    })
+  })
+
+  // ---------------------------------------------------------------------------
   // Note only
   // ---------------------------------------------------------------------------
 

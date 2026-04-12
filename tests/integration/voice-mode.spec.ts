@@ -66,7 +66,10 @@ async function triggerVoiceResult(page: Page, transcript: string): Promise<void>
       onend: (() => void) | null
     } | null
     if (!r) throw new Error('No active mock recognition — did you click the mic button?')
-    r.onresult?.({ results: [[{ transcript: t }]] })
+    // Mimic the real SpeechRecognitionResultList shape: results[i].isFinal and results[i][0].transcript
+    const alternative = { transcript: t, confidence: 1 }
+    const result = Object.assign([alternative], { isFinal: true })
+    r.onresult?.({ results: [result] })
     r.onend?.()
   }, transcript)
 }
@@ -122,6 +125,18 @@ test.describe('voice mode', () => {
     await triggerVoiceResult(page, 'G seven')
 
     await expect(page.getByTestId('note-btn-G')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByTestId('chord-btn-G7')).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  test('chord + separate melody note across two segments ("G seven" then "B")', async ({ page }) => {
+    await injectMockSpeechRecognition(page)
+    await setup(page, 2)
+
+    await page.getByTestId('voice-btn').click()
+    // Simulate the continuous-mode accumulation: two segments arriving as one event
+    await triggerVoiceResult(page, 'G seven B')
+
+    await expect(page.getByTestId('note-btn-B')).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByTestId('chord-btn-G7')).toHaveAttribute('aria-pressed', 'true')
   })
 

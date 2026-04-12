@@ -160,20 +160,25 @@ export function parseVoiceTranscript(
   const text = normalize(transcript)
   if (!text) return {}
 
-  // --- Strategy 1: note first, then quality ("C minor", "G seven") ---
+  // --- Strategy 1: note + quality [+ melody note] ---
+  // Handles "C minor" (note = chord root), and "C minor A" / "G seven B"
+  // where the user says the chord then the melody note after a pause.
   const noteFirst = matchPrefix(text, NOTE_ALIASES)
   if (noteFirst) {
-    const noteName = noteFirst.value
+    const chordRoot = noteFirst.value
     const qualityMatch = matchPrefix(noteFirst.rest, QUALITY_ALIASES)
     if (qualityMatch) {
-      const label = `${noteName}${qualityMatch.value}`
+      const label = `${chordRoot}${qualityMatch.value}`
+      const parsedChordLabel = availableChordLabels.includes(label) ? label : undefined
+      // Look for a trailing melody note: "C major A" → melody note is A, not C
+      const melodyMatch = matchPrefix(qualityMatch.rest, NOTE_ALIASES)
       return {
-        noteName,
-        chordLabel: availableChordLabels.includes(label) ? label : undefined,
+        noteName: melodyMatch ? melodyMatch.value : chordRoot,
+        chordLabel: parsedChordLabel,
       }
     }
     // Note only — no quality heard
-    return { noteName }
+    return { noteName: chordRoot }
   }
 
   // --- Strategy 2: quality first, then note ("minor C") ---
