@@ -135,7 +135,7 @@ export function useSpeechRecognition(
 
       // Only drive the parser on confirmed finals
       if (newFinals) {
-        onTranscriptRef.current(accumulatedRef.current.trim())
+        onTranscriptRef.current(newFinals.trim())
       }
     }
 

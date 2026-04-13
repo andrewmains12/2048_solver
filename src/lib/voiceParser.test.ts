@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseVoiceTranscript } from './voiceParser'
+import { parseVoiceTranscript, parseVoiceAction } from './voiceParser'
 
 // Chord labels available in a C major Tier 1 session (triads)
 const TIER1_LABELS = ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'B°']
@@ -187,5 +187,98 @@ describe('parseVoiceTranscript', () => {
 
   it('plain diminished is correctly parsed when that is said', () => {
     expect(parseVoiceTranscript('B diminished', TIER1_LABELS)).toEqual({ chordLabel: 'B°' })
+  })
+
+  // ---------------------------------------------------------------------------
+  // Silence / noise / filler words
+  // ---------------------------------------------------------------------------
+
+  it('returns {} for common filler "um"', () => {
+    expect(parseVoiceTranscript('um', TIER1_LABELS)).toEqual({})
+  })
+
+  it('returns {} for filler "uh huh"', () => {
+    expect(parseVoiceTranscript('uh huh', TIER1_LABELS)).toEqual({})
+  })
+
+  it('returns {} for affirmation "yeah"', () => {
+    expect(parseVoiceTranscript('yeah', TIER1_LABELS)).toEqual({})
+  })
+
+  it('returns {} for filler "okay"', () => {
+    expect(parseVoiceTranscript('okay', TIER1_LABELS)).toEqual({})
+  })
+
+  it('returns {} for common article "the"', () => {
+    expect(parseVoiceTranscript('the', TIER1_LABELS)).toEqual({})
+  })
+
+  // ---------------------------------------------------------------------------
+  // Multi-chord / truncated / repeated inputs
+  // ---------------------------------------------------------------------------
+
+  it('two chords in one breath — first chord wins, second root treated as melody note', () => {
+    // "C major D minor": note=C, quality=major → chord C; trailing "D minor" → D matches as melody note
+    expect(parseVoiceTranscript('C major D minor', TIER1_LABELS)).toEqual({
+      noteName: 'D',
+      chordLabel: 'C',
+    })
+  })
+
+  it('truncated quality "G sev" — returns note only, no chord', () => {
+    expect(parseVoiceTranscript('G sev', TIER2_LABELS)).toEqual({ noteName: 'G' })
+  })
+
+  it('repeated same answer is idempotent', () => {
+    const first = parseVoiceTranscript('D minor', TIER1_LABELS)
+    const second = parseVoiceTranscript('D minor', TIER1_LABELS)
+    expect(first).toEqual(second)
+    expect(first).toEqual({ chordLabel: 'Dm' })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// parseVoiceAction
+// ---------------------------------------------------------------------------
+
+describe('parseVoiceAction', () => {
+  it('"submit" → submit', () => {
+    expect(parseVoiceAction('submit')).toBe('submit')
+  })
+
+  it('"check" → submit', () => {
+    expect(parseVoiceAction('check')).toBe('submit')
+  })
+
+  it('"done" → submit', () => {
+    expect(parseVoiceAction('done')).toBe('submit')
+  })
+
+  it('"next" → next', () => {
+    expect(parseVoiceAction('next')).toBe('next')
+  })
+
+  it('"continue" → next', () => {
+    expect(parseVoiceAction('continue')).toBe('next')
+  })
+
+  it('is case-insensitive ("SUBMIT" → submit)', () => {
+    expect(parseVoiceAction('SUBMIT')).toBe('submit')
+  })
+
+  it('is case-insensitive ("Next" → next)', () => {
+    expect(parseVoiceAction('Next')).toBe('next')
+  })
+
+  it('returns null for an unrecognised word', () => {
+    expect(parseVoiceAction('hello')).toBeNull()
+  })
+
+  it('returns null for an empty string', () => {
+    expect(parseVoiceAction('')).toBeNull()
+  })
+
+  it('returns null for a note name ("D minor")', () => {
+    expect(parseVoiceAction('D minor')).toBeNull()
   })
 })

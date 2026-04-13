@@ -3,11 +3,11 @@ import { useEffect, useState, useCallback } from 'react'
 import type { ChordLabel, NoteName, Result } from '@/types'
 import { buildScale, diatonicChords, chordLabel } from '@/theory'
 import { displayNote } from '@/theory/notes'
-import { playQuestion, playTonicCadence, getContextState } from '@/audio'
+import { playQuestion, playTonicCadence, getContextState, playFeedbackTone } from '@/audio'
 import { validateAnswer } from '@/exercises'
 import { useSessionStore } from '@/store/sessionStore'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
-import { parseVoiceTranscript } from '@/lib/voiceParser'
+import { parseVoiceTranscript, parseVoiceAction } from '@/lib/voiceParser'
 
 import { NoteSelector } from './NoteSelector'
 import { ChordSelector } from './ChordSelector'
@@ -28,18 +28,40 @@ export function ExerciseScreen() {
   const notes: NoteName[] = scale ? [...scale.notes] : []
   const availableChordLabels = chords.map((c) => chordLabel(c))
 
+  const handleSubmit = useCallback(() => {
+    if (!currentQuestion || !selectedNote || !selectedChord) return
+    const result = validateAnswer(currentQuestion, { noteName: selectedNote, chordLabel: selectedChord })
+    if (!hasSubmitted) {
+      recordResult(result)
+      setHasSubmitted(true)
+    }
+    setLastResult(result)
+    playFeedbackTone(result.correct ? 'correct' : 'wrong')
+  }, [currentQuestion, selectedNote, selectedChord, hasSubmitted, recordResult])
+
+  const handleNext = useCallback(() => nextQuestion(), [nextQuestion])
+
   // Voice input — hook must be called unconditionally (Rules of Hooks)
   const handleVoiceTranscript = useCallback(
     (transcript: string) => {
       const parsed = parseVoiceTranscript(transcript, availableChordLabels)
       if (parsed.noteName && notes.includes(parsed.noteName)) setSelectedNote(parsed.noteName)
       if (parsed.chordLabel) setSelectedChord(parsed.chordLabel)
+
+      const action = parseVoiceAction(transcript)
+      if (action === 'submit') {
+        playFeedbackTone('command')
+        handleSubmit()
+      } else if (action === 'next') {
+        playFeedbackTone('command')
+        handleNext()
+      }
     },
     // availableChordLabels and notes change each render when config changes, but
     // the callback identity only matters for the recognition event — it's stored
     // via ref inside the hook so stale-closure is not a concern.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [availableChordLabels.join(','), notes.join(',')],
+    [availableChordLabels.join(','), notes.join(','), handleSubmit, handleNext],
   )
 
   const { state: voiceState, errorMessage: voiceError, transcript: voiceTranscript, toggle: toggleVoice, reset: resetVoice } =
@@ -64,18 +86,6 @@ export function ExerciseScreen() {
     if (!config) return
     playTonicCadence(config.key)
   }
-
-  const handleSubmit = useCallback(() => {
-    if (!currentQuestion || !selectedNote || !selectedChord) return
-    const result = validateAnswer(currentQuestion, { noteName: selectedNote, chordLabel: selectedChord })
-    if (!hasSubmitted) {
-      recordResult(result)
-      setHasSubmitted(true)
-    }
-    setLastResult(result)
-  }, [currentQuestion, selectedNote, selectedChord, hasSubmitted, recordResult])
-
-  const handleNext = () => nextQuestion()
 
   if (!config || !currentQuestion || !scale) return null
 
