@@ -98,13 +98,11 @@ proceeding. Use your judgment on warnings and minors.
 ### Level 5 — Human review
 Only after levels 1–4 pass: commit, push, and hand off to the human.
 
-## Session Setup — Run This First
+## Session Setup
 
-At the start of every new session (or after cloning):
-```bash
-npm run setup
-```
-This single command: installs npm deps, installs Playwright browsers (or wires the pre-installed Chromium via symlink if the network is unavailable), and prints ready-to-use commands.
+A `SessionStart` hook runs `npm run setup` automatically in the background when a remote session opens — no manual action needed.
+
+**The hook is async.** It takes ~5–15 s on a warm run. If you immediately try to run tests or lint and see "module not found" or similar errors, the hook is still finishing — wait a moment and retry. You can also run `npm run setup` manually to block until it's done.
 
 ## Running the Project
 

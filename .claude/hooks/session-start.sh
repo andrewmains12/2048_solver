@@ -10,5 +10,11 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
+# Run in the background so the session opens immediately.
+# The setup takes ~5–15 s on a warm run. If you kick off tests or lint
+# right away and they fail with "module not found", the hook is still
+# running — wait a moment and retry.
+echo '{"async": true, "asyncTimeout": 300000}'
+
 cd "$CLAUDE_PROJECT_DIR"
 bash scripts/setup.sh
