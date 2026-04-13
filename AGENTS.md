@@ -61,27 +61,11 @@ npm run lint && npm test
 
 ### Level 2 — Integration tests
 ```bash
-PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright test --project=chromium
+npm run test:integration
 ```
-All Playwright tests must pass (visual-verify tests may be skipped if `ANTHROPIC_API_KEY` is absent — that is handled at level 3 instead).
+All Playwright tests must pass on Chromium (visual-verify tests may be skipped if `ANTHROPIC_API_KEY` is absent — that is handled at level 3 instead). WebKit runs automatically in CI; run `npm run test:integration:webkit` locally if it was installed by `npm run setup`.
 
-**Environment note — chromium:** The pre-installed Playwright browser lives at `/opt/pw-browsers` but may be a different build number than the version in `package.json`. If Playwright cannot find its executable, create a symlink:
-```bash
-mkdir -p /opt/pw-browsers/chromium_headless_shell-<expected>/chrome-headless-shell-linux64
-ln -sf /opt/pw-browsers/chromium_headless_shell-<installed>/chrome-linux/headless_shell \
-       /opt/pw-browsers/chromium_headless_shell-<expected>/chrome-headless-shell-linux64/chrome-headless-shell
-```
-Find `<installed>` with `ls /opt/pw-browsers/` and `<expected>` from the error message.
-
-**Environment note — webkit:** WebKit is not pre-installed. Install it once after cloning (requires sudo for system deps on Linux):
-```bash
-npm run install:browsers   # installs chromium + webkit with all system dependencies
-```
-After installing, run the webkit suite to verify iOS Safari behaviour:
-```bash
-npx playwright test --project=webkit
-```
-CI (GitHub Actions) installs both browsers automatically via the `Install Playwright browsers` step in `deploy.yml` — webkit failures in CI mean a real cross-browser regression, not a missing binary.
+**Note:** `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers` is baked into all `test:integration*` scripts in `package.json`. No need to set it manually.
 
 ### Level 3 — Agent visual inspection
 After the dev server is running (`npm run dev`), use Playwright to take screenshots of:
@@ -114,12 +98,21 @@ proceeding. Use your judgment on warnings and minors.
 ### Level 5 — Human review
 Only after levels 1–4 pass: commit, push, and hand off to the human.
 
+## Session Setup — Run This First
+
+At the start of every new session (or after cloning):
+```bash
+npm run setup
+```
+This single command: installs npm deps, installs Playwright browsers (or wires the pre-installed Chromium via symlink if the network is unavailable), and prints ready-to-use commands.
+
 ## Running the Project
 
 ```bash
-npm install
-npm run dev          # dev server at http://localhost:5173
-npm test             # unit tests (Vitest)
-npm run test:integration  # Playwright integration tests (requires dev server)
-npm run build        # production PWA build
+npm run dev                   # dev server at http://localhost:5173
+npm test                      # unit tests (Vitest)
+npm run lint                  # TypeScript type-check
+npm run test:integration      # Playwright integration tests (Chromium)
+npm run test:integration:webkit  # WebKit / iOS Safari (if installed)
+npm run build                 # production PWA build
 ```
