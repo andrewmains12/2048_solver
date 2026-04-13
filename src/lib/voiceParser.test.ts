@@ -281,4 +281,16 @@ describe('parseVoiceAction', () => {
   it('returns null for a note name ("D minor")', () => {
     expect(parseVoiceAction('D minor')).toBeNull()
   })
+
+  it('"play" → play', () => {
+    expect(parseVoiceAction('play')).toBe('play')
+  })
+
+  it('"replay" → play', () => {
+    expect(parseVoiceAction('replay')).toBe('play')
+  })
+
+  it('is case-insensitive ("PLAY" → play)', () => {
+    expect(parseVoiceAction('PLAY')).toBe('play')
+  })
 })

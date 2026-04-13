@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 
 import type { ChordLabel, NoteName, Result } from '@/types'
 import { buildScale, diatonicChords, chordLabel } from '@/theory'
@@ -39,7 +39,13 @@ export function ExerciseScreen() {
     playFeedbackTone(result.correct ? 'correct' : 'wrong')
   }, [currentQuestion, selectedNote, selectedChord, hasSubmitted, recordResult])
 
-  const handleNext = useCallback(() => nextQuestion(), [nextQuestion])
+  // When true, the currentQuestion effect will auto-play the incoming question.
+  const autoPlayRef = useRef(false)
+
+  const handleNext = useCallback(() => {
+    autoPlayRef.current = true
+    nextQuestion()
+  }, [nextQuestion])
 
   // Voice input — hook must be called unconditionally (Rules of Hooks)
   const handleVoiceTranscript = useCallback(
@@ -55,6 +61,8 @@ export function ExerciseScreen() {
       } else if (action === 'next') {
         playFeedbackTone('command')
         handleNext()
+      } else if (action === 'play') {
+        if (currentQuestion) playQuestion(currentQuestion.chord, currentQuestion.note)
       }
     },
     // availableChordLabels and notes change each render when config changes, but
@@ -67,7 +75,9 @@ export function ExerciseScreen() {
   const { state: voiceState, errorMessage: voiceError, transcript: voiceTranscript, toggle: toggleVoice, reset: resetVoice } =
     useSpeechRecognition(handleVoiceTranscript)
 
-  // Reset selections when question changes (but do NOT auto-play — iOS requires user gesture)
+  // Reset selections when question changes; auto-play if the user tapped Next.
+  // Auto-play is safe here because the AudioGate ensures the context is running
+  // before the session starts — no additional user gesture is required.
   useEffect(() => {
     if (!currentQuestion) return
     setSelectedNote(null)
@@ -75,6 +85,10 @@ export function ExerciseScreen() {
     setLastResult(null)
     setHasSubmitted(false)
     resetVoice()
+    if (autoPlayRef.current) {
+      autoPlayRef.current = false
+      playQuestion(currentQuestion.chord, currentQuestion.note)
+    }
   }, [currentQuestion, resetVoice])
 
   const handlePlayQuestion = () => {
