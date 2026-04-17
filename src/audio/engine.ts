@@ -115,3 +115,27 @@ export function playQuestion(
 export function replayQuestion(chord: Chord, note: NoteName): void {
   playQuestion(chord, note)
 }
+
+/**
+ * Plays a short feedback tone to confirm a voice interaction result.
+ * Silently no-ops if the audio context is not yet running (before the iOS gate).
+ */
+export function playFeedbackTone(type: 'correct' | 'wrong' | 'command'): void {
+  if (Tone.context.state !== 'running') return
+  try {
+    const s = getSynth()
+    const now = Tone.now() + LOOKAHEAD
+    if (type === 'correct') {
+      s.triggerAttackRelease('A4', '16n', now)
+      s.triggerAttackRelease('A5', '16n', now + 0.12)
+    } else if (type === 'wrong') {
+      s.triggerAttackRelease('A4', '16n', now)
+      s.triggerAttackRelease('E4', '16n', now + 0.12)
+    } else {
+      // command
+      s.triggerAttackRelease('C5', '32n', now)
+    }
+  } catch (err) {
+    console.error('[audio] playFeedbackTone failed:', err)
+  }
+}

@@ -1,5 +1,43 @@
 import { type Page } from '@playwright/test'
 
+// ---------------------------------------------------------------------------
+// Oscillator spy — shared by audio-validation and voice-mode tests
+// ---------------------------------------------------------------------------
+
+/**
+ * Patches AudioContext.createOscillator before the page loads so every
+ * oscillator creation and start is counted. Must be called before page.goto().
+ */
+export async function injectOscillatorSpy(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    ;(window as unknown as Record<string, unknown>).__oscStartCount = 0
+    ;(window as unknown as Record<string, unknown>).__oscCreateCount = 0
+
+    const AnyAC =
+      window.AudioContext ?? (window as unknown as Record<string, unknown>).webkitAudioContext
+    if (!AnyAC) return
+
+    const origCreate = (AnyAC as typeof AudioContext).prototype.createOscillator
+    ;(AnyAC as typeof AudioContext).prototype.createOscillator = function () {
+      ;(window as unknown as Record<string, number>).__oscCreateCount++
+      const osc = origCreate.call(this)
+      const origStart = osc.start.bind(osc)
+      osc.start = (...args: Parameters<typeof osc.start>) => {
+        ;(window as unknown as Record<string, number>).__oscStartCount++
+        return origStart(...args)
+      }
+      return osc
+    }
+  })
+}
+
+export async function getOscCounts(page: Page): Promise<{ created: number; started: number }> {
+  return page.evaluate(() => ({
+    created: (window as unknown as Record<string, number>).__oscCreateCount ?? 0,
+    started: (window as unknown as Record<string, number>).__oscStartCount ?? 0,
+  }))
+}
+
 /**
  * Passes the iOS audio gate by clicking it.
  * The audio module is mocked in integration tests so no real audio plays.

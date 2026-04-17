@@ -1,13 +1,13 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 
 import type { ChordLabel, NoteName, Result } from '@/types'
 import { buildScale, diatonicChords, chordLabel } from '@/theory'
 import { displayNote } from '@/theory/notes'
-import { playQuestion, playTonicCadence, getContextState } from '@/audio'
+import { playQuestion, playTonicCadence, getContextState, playFeedbackTone, speakCorrection } from '@/audio'
 import { validateAnswer } from '@/exercises'
 import { useSessionStore } from '@/store/sessionStore'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
-import { parseVoiceTranscript } from '@/lib/voiceParser'
+import { parseVoiceTranscript, parseVoiceAction } from '@/lib/voiceParser'
 
 import { NoteSelector } from './NoteSelector'
 import { ChordSelector } from './ChordSelector'
@@ -21,6 +21,18 @@ export function ExerciseScreen() {
   const [lastResult, setLastResult] = useState<Result | null>(null)
   const [hasSubmitted, setHasSubmitted] = useState(false)
 
+  // Refs kept in sync during render so memoized callbacks can read current values
+  // without being added to their dependency arrays (stale-closure prevention).
+  const selectedNoteRef = useRef<NoteName | null>(null)
+  const selectedChordRef = useRef<ChordLabel | null>(null)
+  const hasSubmittedRef = useRef(false)
+  selectedNoteRef.current = selectedNote
+  selectedChordRef.current = selectedChord
+  hasSubmittedRef.current = hasSubmitted
+
+  // Set to true when voice triggers a submission; cleared by the auto-advance effect.
+  const voiceAutoAdvancePendingRef = useRef(false)
+
   // Derived values — computed unconditionally so they can be used in hooks below.
   // These evaluate to empty/null when config is not yet set (before session starts).
   const scale = config ? buildScale(config.key, 'major') : null
@@ -28,24 +40,69 @@ export function ExerciseScreen() {
   const notes: NoteName[] = scale ? [...scale.notes] : []
   const availableChordLabels = chords.map((c) => chordLabel(c))
 
+  const handleSubmit = useCallback((noteOverride?: NoteName | null, chordOverride?: ChordLabel | null) => {
+    const note = noteOverride ?? selectedNote
+    const chord = chordOverride ?? selectedChord
+    if (!currentQuestion || !note || !chord) return
+    const result = validateAnswer(currentQuestion, { noteName: note, chordLabel: chord })
+    if (!hasSubmitted) {
+      recordResult(result)
+      setHasSubmitted(true)
+    }
+    setLastResult(result)
+    playFeedbackTone(result.correct ? 'correct' : 'wrong')
+  }, [currentQuestion, selectedNote, selectedChord, hasSubmitted, recordResult])
+
+  // When true, the currentQuestion effect will auto-play the incoming question.
+  const autoPlayRef = useRef(false)
+
+  const handleNext = useCallback(() => {
+    autoPlayRef.current = true
+    nextQuestion()
+  }, [nextQuestion])
+
   // Voice input — hook must be called unconditionally (Rules of Hooks)
   const handleVoiceTranscript = useCallback(
     (transcript: string) => {
       const parsed = parseVoiceTranscript(transcript, availableChordLabels)
       if (parsed.noteName && notes.includes(parsed.noteName)) setSelectedNote(parsed.noteName)
       if (parsed.chordLabel) setSelectedChord(parsed.chordLabel)
+
+      const action = parseVoiceAction(transcript)
+      if (action === 'submit') {
+        playFeedbackTone('command')
+        voiceAutoAdvancePendingRef.current = true
+        handleSubmit()
+      } else if (action === 'next') {
+        playFeedbackTone('command')
+        handleNext()
+      } else if (action === 'play') {
+        if (currentQuestion) playQuestion(currentQuestion.chord, currentQuestion.note)
+      } else if (!hasSubmittedRef.current) {
+        // Auto-submit when voice fills the last missing field
+        const nextNote = (parsed.noteName && notes.includes(parsed.noteName))
+          ? parsed.noteName
+          : selectedNoteRef.current
+        const nextChord = parsed.chordLabel ?? selectedChordRef.current
+        if (nextNote && nextChord) {
+          voiceAutoAdvancePendingRef.current = true
+          handleSubmit(nextNote, nextChord)
+        }
+      }
     },
     // availableChordLabels and notes change each render when config changes, but
     // the callback identity only matters for the recognition event — it's stored
     // via ref inside the hook so stale-closure is not a concern.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [availableChordLabels.join(','), notes.join(',')],
+    [availableChordLabels.join(','), notes.join(','), handleSubmit, handleNext],
   )
 
   const { state: voiceState, errorMessage: voiceError, transcript: voiceTranscript, toggle: toggleVoice, reset: resetVoice } =
     useSpeechRecognition(handleVoiceTranscript)
 
-  // Reset selections when question changes (but do NOT auto-play — iOS requires user gesture)
+  // Reset selections when question changes; auto-play if the user tapped Next.
+  // Auto-play is safe here because the AudioGate ensures the context is running
+  // before the session starts — no additional user gesture is required.
   useEffect(() => {
     if (!currentQuestion) return
     setSelectedNote(null)
@@ -53,7 +110,24 @@ export function ExerciseScreen() {
     setLastResult(null)
     setHasSubmitted(false)
     resetVoice()
+    if (autoPlayRef.current) {
+      autoPlayRef.current = false
+      playQuestion(currentQuestion.chord, currentQuestion.note)
+    }
   }, [currentQuestion, resetVoice])
+
+  // Auto-advance after a voice-triggered submission: speak correction if wrong,
+  // then move to the next question after the feedback window.
+  useEffect(() => {
+    if (!voiceAutoAdvancePendingRef.current || !lastResult) return
+    voiceAutoAdvancePendingRef.current = false
+    const delay = lastResult.correct ? 1500 : 2500
+    if (!lastResult.correct) {
+      speakCorrection(lastResult.question.chord, lastResult.question.note)
+    }
+    const timer = setTimeout(handleNext, delay)
+    return () => clearTimeout(timer)
+  }, [lastResult, handleNext])
 
   const handlePlayQuestion = () => {
     if (!currentQuestion) return
@@ -64,18 +138,6 @@ export function ExerciseScreen() {
     if (!config) return
     playTonicCadence(config.key)
   }
-
-  const handleSubmit = useCallback(() => {
-    if (!currentQuestion || !selectedNote || !selectedChord) return
-    const result = validateAnswer(currentQuestion, { noteName: selectedNote, chordLabel: selectedChord })
-    if (!hasSubmitted) {
-      recordResult(result)
-      setHasSubmitted(true)
-    }
-    setLastResult(result)
-  }, [currentQuestion, selectedNote, selectedChord, hasSubmitted, recordResult])
-
-  const handleNext = () => nextQuestion()
 
   if (!config || !currentQuestion || !scale) return null
 
@@ -197,7 +259,7 @@ export function ExerciseScreen() {
         {hasSubmitted ? (
           <div className="flex gap-2">
             <button
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               disabled={!canSubmit}
               className="flex-1 py-4 bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-bold text-lg transition-colors"
               data-testid="check-again-btn"
@@ -214,7 +276,7 @@ export function ExerciseScreen() {
           </div>
         ) : (
           <button
-            onClick={handleSubmit}
+            onClick={() => handleSubmit()}
             disabled={!canSubmit}
             className="w-full py-4 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-bold text-lg transition-colors"
             data-testid="submit-btn"

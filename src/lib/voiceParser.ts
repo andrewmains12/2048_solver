@@ -134,6 +134,25 @@ function matchPrefix<T>(
 // Public API
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Voice action parser — recognises hands-free command words
+// ---------------------------------------------------------------------------
+
+export type VoiceAction = 'submit' | 'next' | 'play'
+
+/**
+ * Returns the action the user spoke, or null if no command word was recognised.
+ * Checked after answer parsing so that a chord name never accidentally triggers
+ * a command (none of the note/quality aliases match these words).
+ */
+export function parseVoiceAction(transcript: string): VoiceAction | null {
+  const text = normalize(transcript)
+  if (text === 'submit' || text === 'check' || text === 'done') return 'submit'
+  if (text === 'next' || text === 'continue') return 'next'
+  if (text === 'play' || text === 'replay') return 'play'
+  return null
+}
+
 export interface ParsedVoiceAnswer {
   noteName?: NoteName
   chordLabel?: ChordLabel
