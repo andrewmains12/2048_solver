@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 
 import type { ChordLabel, NoteName, Result } from '@/types'
 import { buildScale, diatonicChords, chordLabel } from '@/theory'
+import { displayNote } from '@/theory/notes'
 import { playQuestion, playTonicCadence, getContextState } from '@/audio'
 import { validateAnswer } from '@/exercises'
 import { useSessionStore } from '@/store/sessionStore'
@@ -106,7 +107,7 @@ export function ExerciseScreen() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
         <span className="text-sm font-medium text-white/60">
-          Key of {config.key} · Tier {config.tier}
+          Key of {displayNote(config.key, config.key)} · Tier {config.tier}
         </span>
         <span className="text-sm text-white/60" data-testid="score-counter">
           {stats.totalCorrect}/{stats.totalQuestions}
@@ -188,9 +189,10 @@ export function ExerciseScreen() {
           notes={notes}
           selected={selectedNote}
           onSelect={setSelectedNote}
+          keyRoot={config.key}
         />
 
-        {lastResult && <Feedback result={lastResult} />}
+        {lastResult && <Feedback result={lastResult} keyRoot={config.key} />}
 
         {hasSubmitted ? (
           <div className="flex gap-2">

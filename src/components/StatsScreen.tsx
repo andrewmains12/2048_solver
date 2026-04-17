@@ -1,5 +1,6 @@
 import { useSessionStore } from '@/store/sessionStore'
 import { accuracy } from '@/exercises'
+import { displayNote } from '@/theory/notes'
 
 function BarRow({ label, attempts, correct }: { label: string; attempts: number; correct: number }) {
   const pct = accuracy(attempts, correct)
@@ -21,7 +22,7 @@ function BarRow({ label, attempts, correct }: { label: string; attempts: number;
 }
 
 export function StatsScreen() {
-  const { stats, resetToSetup } = useSessionStore()
+  const { stats, config, resetToSetup } = useSessionStore()
   const totalPct = accuracy(stats.totalQuestions, stats.totalCorrect)
 
   return (
@@ -37,7 +38,7 @@ export function StatsScreen() {
           <h3 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-3">Notes</h3>
           <div className="space-y-2">
             {Object.values(stats.noteStats).map((ns) => (
-              <BarRow key={ns.noteName} label={ns.noteName} attempts={ns.attempts} correct={ns.correct} />
+              <BarRow key={ns.noteName} label={config ? displayNote(ns.noteName, config.key) : ns.noteName} attempts={ns.attempts} correct={ns.correct} />
             ))}
           </div>
         </section>

@@ -1,13 +1,15 @@
 import type { NoteName } from '@/types'
+import { displayNote } from '@/theory/notes'
 
 interface Props {
   notes: NoteName[]
   selected: NoteName | null
   onSelect: (note: NoteName) => void
+  keyRoot: NoteName
   disabled?: boolean
 }
 
-export function NoteSelector({ notes, selected, onSelect, disabled = false }: Props) {
+export function NoteSelector({ notes, selected, onSelect, keyRoot, disabled = false }: Props) {
   return (
     <div className="w-full" data-testid="note-selector">
       <p className="text-sm font-medium text-white/60 mb-2">What note?</p>
@@ -25,7 +27,7 @@ export function NoteSelector({ notes, selected, onSelect, disabled = false }: Pr
             data-testid={`note-btn-${note}`}
             aria-pressed={selected === note}
           >
-            {note}
+            {displayNote(note, keyRoot)}
           </button>
         ))}
       </div>
