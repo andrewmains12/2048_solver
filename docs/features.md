@@ -11,17 +11,18 @@
 | Replay + tonic cadence playback | Shipped |
 | Per-session score counter | Shipped |
 | PWA manifest + offline support | Shipped |
-| **Voice input mode** | In progress — see below |
-| Phone install (PWA) | MVP blocker |
-| Help / intro screen | MVP blocker |
-| Demo bug: plays all at once | MVP blocker |
-| All-time score tracking | Wishlist |
-| Relative degree mode | Planned |
-| Minor keys | Planned |
-| Chord progressions | Planned |
-| Intervals | Planned |
-| Chord / note only modes | Planned |
-| Tier 3 — chromatic notes | Planned |
+| Voice input mode | Shipped (see [docs/voice-mode.md](voice-mode.md)) |
+| PWA phone install flow | [#19](https://github.com/andrewmains12/2048_solver/issues/19) |
+| Help / intro screen | [#20](https://github.com/andrewmains12/2048_solver/issues/20) |
+| Demo bug: plays all at once | [#21](https://github.com/andrewmains12/2048_solver/issues/21) |
+| All-time score tracking | [#22](https://github.com/andrewmains12/2048_solver/issues/22) |
+| Relative degree / solfège mode | [#14](https://github.com/andrewmains12/2048_solver/issues/14) |
+| Minor keys | [#23](https://github.com/andrewmains12/2048_solver/issues/23) |
+| Chord progressions mode | [#13](https://github.com/andrewmains12/2048_solver/issues/13) |
+| Chord inversions (playback) | [#12](https://github.com/andrewmains12/2048_solver/issues/12) |
+| Interval recognition | [#24](https://github.com/andrewmains12/2048_solver/issues/24) |
+| Chord-only / note-only modes | [#25](https://github.com/andrewmains12/2048_solver/issues/25) |
+| Tier 3 — chromatic notes | [#26](https://github.com/andrewmains12/2048_solver/issues/26) |
 
 ---
 
@@ -46,7 +47,7 @@ note played over it, in the context of an established key.
 | Note name | C, D, E, F, G, A, B | Button grid of diatonic notes in key |
 | Chord | G major, Dm, FΔ7, G7 | Button grid of diatonic chords |
 
-Identification is **absolute** (real note/chord names), not Roman numeral / scale degree. Relative degree training is a planned future tier.
+Identification is **absolute** (real note/chord names), not Roman numeral / scale degree. Relative degree training is tracked in [#14](https://github.com/andrewmains12/2048_solver/issues/14).
 
 ---
 
@@ -61,15 +62,14 @@ Identification is **absolute** (real note/chord names), not Roman numeral / scal
 - Adds diatonic 7th chords (IΔ7, ii7, iii7, IVΔ7, V7, vi7, viiø7)
 - Notes remain diatonic (7 notes)
 
-### Tier 3 — Chromatic Notes (future)
-- All 12 chromatic pitch classes available as note answers
-- Useful for passing tones, borrowed chords, blues inflections
+### Tier 3 — Chromatic Notes
+Tracked in [#26](https://github.com/andrewmains12/2048_solver/issues/26).
 
 ---
 
 ## Session Configuration
 
-- **Key selection** — User picks the key for the session (any of 12 major keys; minor keys future)
+- **Key selection** — User picks the key for the session (any of 12 major keys; minor keys tracked in [#23](https://github.com/andrewmains12/2048_solver/issues/23))
 - **Tier selection** — Choose difficulty tier before starting
 - **Question count** — Optional: end session after N questions, or free-running
 
@@ -81,6 +81,8 @@ Identification is **absolute** (real note/chord names), not Roman numeral / scal
 - Accuracy per chord (e.g. "iii: 45% correct")
 - Session history: date, key, tier, score
 - Stored offline in localStorage / IndexedDB
+
+All-time cross-session persistence tracked in [#22](https://github.com/andrewmains12/2048_solver/issues/22).
 
 ---
 
@@ -94,39 +96,11 @@ Identification is **absolute** (real note/chord names), not Roman numeral / scal
 - Instrument: piano-like synth (PolySynth)
 - Replay button: re-plays the chord + note without generating a new question
 
+Chord inversion playback tracked in [#12](https://github.com/andrewmains12/2048_solver/issues/12).
+
 ---
 
 ## Voice Input Mode
 
 Speak note + chord answers instead of tapping. Targets iOS Safari 14.5+ and Chrome.
-See [`docs/voice-mode.md`](voice-mode.md) for progress, known issues, and TODOs.
-
----
-
-## Roadmap — MVP Blockers
-
-Features required before the app is considered ready for regular phone use.
-
-- **Phone install (PWA)** — The "Add to Home Screen" / install-to-phone flow is not working correctly; needs end-to-end testing and any manifest/service-worker fixes required to make it reliable on iOS and Android.
-- **Help / intro** — New users have no onboarding. Need some form of first-run intro or persistent help screen explaining the exercise, controls, and scoring.
-- **Demo bug: plays all at once** — The demo mode currently triggers all audio simultaneously instead of sequencing questions. Root cause TBD; likely a scheduling/state issue in `DemoMode.tsx`.
-
----
-
-## Wishlist
-
-Nice-to-have improvements with no fixed milestone.
-
-- ~~**Live score during a round**~~ — Already implemented (`score-counter` in the exercise screen header).
-- **All-time score tracking** — Persist session history (date, key, tier, score) across sessions, accessible from a stats/history screen.
-
----
-
-## Planned / Future Features
-
-- **Relative degree mode** — Show scale degree (1–7 / do–ti) instead of absolute names
-- **Minor keys** — Natural, harmonic, melodic minor scale options
-- **Chord progressions** — Hear a 2–4 chord sequence before the melody note (harder)
-- **Intervals** — Classic GNU Solfege-style interval recognition
-- **Chord only** — Identify chord without a melody note (simpler warmup)
-- **Note only** — Identify note in key context without a chord (simpler warmup)
+See [`docs/voice-mode.md`](voice-mode.md) for the shipped implementation, known issues, and open TODOs ([#15](https://github.com/andrewmains12/2048_solver/issues/15) [#16](https://github.com/andrewmains12/2048_solver/issues/16) [#17](https://github.com/andrewmains12/2048_solver/issues/17) [#18](https://github.com/andrewmains12/2048_solver/issues/18)).
