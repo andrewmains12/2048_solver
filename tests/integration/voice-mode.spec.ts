@@ -11,7 +11,7 @@
  */
 
 import { test, expect, type Page } from '@playwright/test'
-import { passAudioGate, startSession } from './helpers'
+import { passAudioGate, startSession, injectOscillatorSpy, getOscCounts } from './helpers'
 
 // ---------------------------------------------------------------------------
 // Mock injection
@@ -299,10 +299,9 @@ test.describe('voice mode', () => {
     await injectMockSpeechRecognition(page)
     await setup(page, 1)
 
-    // Fill and submit via button clicks so we can test voice "next" independently
+    // Fill answer via voice — auto-submit fires when both fields are set
     await page.getByTestId('voice-btn').click()
     await triggerVoiceResult(page, 'D minor E')
-    await page.getByTestId('submit-btn').click()
 
     await expect(page.getByTestId('check-again-btn')).toBeVisible()
 
@@ -313,5 +312,123 @@ test.describe('voice mode', () => {
     // After advancing, submit button is back (hasSubmitted reset)
     await expect(page.getByTestId('submit-btn')).toBeVisible()
     await expect(page.getByTestId('check-again-btn')).not.toBeVisible()
+  })
+
+  // -------------------------------------------------------------------------
+  // Auto-play and "play" voice command — audio coverage
+  // -------------------------------------------------------------------------
+
+  test('Next button auto-plays the incoming question', async ({ page }) => {
+    await injectOscillatorSpy(page)
+    await injectMockSpeechRecognition(page)
+    await setup(page, 1)
+
+    // Fill answer via voice — auto-submit fires, unlocking the Next button
+    await page.getByTestId('voice-btn').click()
+    await triggerVoiceResult(page, 'D minor E')
+    await expect(page.getByTestId('next-btn')).toBeVisible()
+
+    const before = await getOscCounts(page)
+    await page.getByTestId('next-btn').click()
+
+    // Allow Tone.js scheduler time to start oscillators
+    await page.waitForTimeout(400)
+
+    const after = await getOscCounts(page)
+    expect(
+      after.started - before.started,
+      'Expected auto-play oscillators to start after Next',
+    ).toBeGreaterThan(0)
+  })
+
+  test('voice "next" command auto-plays the incoming question', async ({ page }) => {
+    await injectOscillatorSpy(page)
+    await injectMockSpeechRecognition(page)
+    await setup(page, 1)
+
+    // Fill answer via voice — auto-submit fires
+    await page.getByTestId('voice-btn').click()
+    await triggerVoiceResult(page, 'D minor E')
+    await expect(page.getByTestId('check-again-btn')).toBeVisible()
+
+    const before = await getOscCounts(page)
+
+    await page.getByTestId('voice-btn').click()
+    await triggerVoiceResult(page, 'next')
+
+    await page.waitForTimeout(400)
+
+    const after = await getOscCounts(page)
+    expect(
+      after.started - before.started,
+      'Expected auto-play oscillators to start after voice "next"',
+    ).toBeGreaterThan(0)
+  })
+
+  test('voice "play" command replays the current question', async ({ page }) => {
+    await injectOscillatorSpy(page)
+    await injectMockSpeechRecognition(page)
+    await setup(page, 1)
+
+    const before = await getOscCounts(page)
+
+    await page.getByTestId('voice-btn').click()
+    await triggerVoiceResult(page, 'play')
+
+    await page.waitForTimeout(400)
+
+    const after = await getOscCounts(page)
+    expect(
+      after.started - before.started,
+      'Expected oscillators to start after voice "play"',
+    ).toBeGreaterThan(0)
+  })
+
+  // -------------------------------------------------------------------------
+  // Auto-advance in voice mode
+  // -------------------------------------------------------------------------
+
+  test('voice auto-submits when both fields are filled in one utterance', async ({ page }) => {
+    await injectMockSpeechRecognition(page)
+    await setup(page, 1)
+
+    await page.getByTestId('voice-btn').click()
+    await triggerVoiceResult(page, 'D minor E')
+
+    // Both fields filled → auto-submitted: check-again-btn should be visible
+    await expect(page.getByTestId('check-again-btn')).toBeVisible()
+    await expect(page.getByTestId('submit-btn')).not.toBeVisible()
+  })
+
+  test('voice auto-advances to next question after feedback window', async ({ page }) => {
+    await injectMockSpeechRecognition(page)
+    await setup(page, 1)
+
+    await page.getByTestId('voice-btn').click()
+    await triggerVoiceResult(page, 'D minor E')
+
+    // Should have auto-submitted
+    await expect(page.getByTestId('check-again-btn')).toBeVisible()
+
+    // After the auto-advance delay (max 2.5 s for wrong answers), next question loads
+    await expect(page.getByTestId('submit-btn')).toBeVisible({ timeout: 3500 })
+    await expect(page.getByTestId('check-again-btn')).not.toBeVisible()
+  })
+
+  test('voice auto-advances after filling fields across two segments', async ({ page }) => {
+    await injectMockSpeechRecognition(page)
+    await setup(page, 1)
+
+    await page.getByTestId('voice-btn').click()
+    // First segment fills chord only
+    await triggerVoiceSegmentKeepAlive(page, 'D minor')
+    await expect(page.getByTestId('chord-btn-Dm')).toHaveAttribute('aria-pressed', 'true')
+    // Submit button should still be visible (not yet auto-submitted)
+    await expect(page.getByTestId('submit-btn')).toBeVisible()
+
+    // Second segment fills note → both complete → auto-submit
+    await triggerVoiceResult(page, 'E')
+    await expect(page.getByTestId('note-btn-E')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByTestId('check-again-btn')).toBeVisible()
   })
 })

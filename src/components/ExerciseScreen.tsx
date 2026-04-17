@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import type { ChordLabel, NoteName, Result } from '@/types'
 import { buildScale, diatonicChords, chordLabel } from '@/theory'
 import { displayNote } from '@/theory/notes'
-import { playQuestion, playTonicCadence, getContextState, playFeedbackTone } from '@/audio'
+import { playQuestion, playTonicCadence, getContextState, playFeedbackTone, speakCorrection } from '@/audio'
 import { validateAnswer } from '@/exercises'
 import { useSessionStore } from '@/store/sessionStore'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
@@ -21,6 +21,18 @@ export function ExerciseScreen() {
   const [lastResult, setLastResult] = useState<Result | null>(null)
   const [hasSubmitted, setHasSubmitted] = useState(false)
 
+  // Refs kept in sync during render so memoized callbacks can read current values
+  // without being added to their dependency arrays (stale-closure prevention).
+  const selectedNoteRef = useRef<NoteName | null>(null)
+  const selectedChordRef = useRef<ChordLabel | null>(null)
+  const hasSubmittedRef = useRef(false)
+  selectedNoteRef.current = selectedNote
+  selectedChordRef.current = selectedChord
+  hasSubmittedRef.current = hasSubmitted
+
+  // Set to true when voice triggers a submission; cleared by the auto-advance effect.
+  const voiceAutoAdvancePendingRef = useRef(false)
+
   // Derived values — computed unconditionally so they can be used in hooks below.
   // These evaluate to empty/null when config is not yet set (before session starts).
   const scale = config ? buildScale(config.key, 'major') : null
@@ -28,9 +40,11 @@ export function ExerciseScreen() {
   const notes: NoteName[] = scale ? [...scale.notes] : []
   const availableChordLabels = chords.map((c) => chordLabel(c))
 
-  const handleSubmit = useCallback(() => {
-    if (!currentQuestion || !selectedNote || !selectedChord) return
-    const result = validateAnswer(currentQuestion, { noteName: selectedNote, chordLabel: selectedChord })
+  const handleSubmit = useCallback((noteOverride?: NoteName | null, chordOverride?: ChordLabel | null) => {
+    const note = noteOverride ?? selectedNote
+    const chord = chordOverride ?? selectedChord
+    if (!currentQuestion || !note || !chord) return
+    const result = validateAnswer(currentQuestion, { noteName: note, chordLabel: chord })
     if (!hasSubmitted) {
       recordResult(result)
       setHasSubmitted(true)
@@ -57,12 +71,23 @@ export function ExerciseScreen() {
       const action = parseVoiceAction(transcript)
       if (action === 'submit') {
         playFeedbackTone('command')
+        voiceAutoAdvancePendingRef.current = true
         handleSubmit()
       } else if (action === 'next') {
         playFeedbackTone('command')
         handleNext()
       } else if (action === 'play') {
         if (currentQuestion) playQuestion(currentQuestion.chord, currentQuestion.note)
+      } else if (!hasSubmittedRef.current) {
+        // Auto-submit when voice fills the last missing field
+        const nextNote = (parsed.noteName && notes.includes(parsed.noteName))
+          ? parsed.noteName
+          : selectedNoteRef.current
+        const nextChord = parsed.chordLabel ?? selectedChordRef.current
+        if (nextNote && nextChord) {
+          voiceAutoAdvancePendingRef.current = true
+          handleSubmit(nextNote, nextChord)
+        }
       }
     },
     // availableChordLabels and notes change each render when config changes, but
@@ -90,6 +115,19 @@ export function ExerciseScreen() {
       playQuestion(currentQuestion.chord, currentQuestion.note)
     }
   }, [currentQuestion, resetVoice])
+
+  // Auto-advance after a voice-triggered submission: speak correction if wrong,
+  // then move to the next question after the feedback window.
+  useEffect(() => {
+    if (!voiceAutoAdvancePendingRef.current || !lastResult) return
+    voiceAutoAdvancePendingRef.current = false
+    const delay = lastResult.correct ? 1500 : 2500
+    if (!lastResult.correct) {
+      speakCorrection(lastResult.question.chord, lastResult.question.note)
+    }
+    const timer = setTimeout(handleNext, delay)
+    return () => clearTimeout(timer)
+  }, [lastResult, handleNext])
 
   const handlePlayQuestion = () => {
     if (!currentQuestion) return
@@ -221,7 +259,7 @@ export function ExerciseScreen() {
         {hasSubmitted ? (
           <div className="flex gap-2">
             <button
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               disabled={!canSubmit}
               className="flex-1 py-4 bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-bold text-lg transition-colors"
               data-testid="check-again-btn"
@@ -238,7 +276,7 @@ export function ExerciseScreen() {
           </div>
         ) : (
           <button
-            onClick={handleSubmit}
+            onClick={() => handleSubmit()}
             disabled={!canSubmit}
             className="w-full py-4 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-bold text-lg transition-colors"
             data-testid="submit-btn"
