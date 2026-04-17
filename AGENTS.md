@@ -45,6 +45,7 @@ docs/          Design and architecture documents
 - **Audio only in `src/audio/`.** React components never call Tone.js directly.
 - **Tests are DRY.** Factor shared setup into helpers. Assert on full return values, not fragments.
 - See [docs/testing.md](docs/testing.md) for full test conventions.
+- **Trace all render sites when changing display logic.** If you change how a data type is displayed (e.g. note names), grep for every component that renders that type and update them all in the same PR. Partial propagation creates UI inconsistencies that are easy to miss in tests but obvious to users (e.g. note buttons say "Bb" but the page header says "A#").
 
 ## Verification Gate — Required Before Marking Work Ready for Human Review
 
@@ -52,6 +53,7 @@ A change is **not** ready for human review until it has passed all four levels i
 
 ### Level 1 — Type check + unit tests
 ```bash
+npm install          # always run first — node_modules may not exist
 npm run lint && npm test
 ```
 `npm run lint` runs `tsc --noEmit` — catches type errors that Vitest misses

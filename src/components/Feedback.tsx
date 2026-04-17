@@ -1,11 +1,13 @@
-import type { Result } from '@/types'
+import type { NoteName, Result } from '@/types'
 import { chordLabel } from '@/theory'
+import { displayNote } from '@/theory/notes'
 
 interface Props {
   result: Result
+  keyRoot: NoteName
 }
 
-export function Feedback({ result }: Props) {
+export function Feedback({ result, keyRoot }: Props) {
   if (result.correct) {
     return (
       <div
@@ -17,7 +19,7 @@ export function Feedback({ result }: Props) {
     )
   }
 
-  const correctNote = result.question.note
+  const correctNote = displayNote(result.question.note, keyRoot)
   const correctChord = chordLabel(result.question.chord)
 
   return (
