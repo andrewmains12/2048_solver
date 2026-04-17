@@ -94,8 +94,25 @@ Read each screenshot and verify it matches the expected layout described in `tes
 
 Any screen that looks broken, blank, or wrong must be diagnosed and fixed before proceeding to level 4.
 
-### Level 4 — Human review
-Only after levels 1–3 pass: commit, push, and hand off to the human.
+### Level 4 — Independent agent review
+After levels 1–3 pass, spawn a **fresh agent** with no memory of the current session to review your diff:
+
+```
+Review the staged changes in this repository for correctness, style, and potential
+issues. Run `git diff HEAD` (or `git diff main...HEAD` if commits are already made)
+to get the diff. Check: type safety, logic correctness, adherence to project
+conventions in AGENTS.md (pure functions in theory/, no Tone.js in components/,
+tests are DRY), full propagation of any display-logic changes (grep for all render
+sites), and any security or performance concerns. Report findings as a short
+bulleted list grouped by severity: blocking / warning / minor.
+```
+
+The reviewing agent must have no context from the implementation session — it should
+reach its own conclusions independently. Address any **blocking** findings before
+proceeding. Use your judgment on warnings and minors.
+
+### Level 5 — Human review
+Only after levels 1–4 pass: commit, push, and hand off to the human.
 
 ## Running the Project
 
