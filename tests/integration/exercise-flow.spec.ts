@@ -74,6 +74,16 @@ test('G major shows F# in note buttons', async ({ page }) => {
   expect(notes).not.toContain('F')
 })
 
+test('Bb major (A# key) shows flat note names in exercise', async ({ page }) => {
+  await passAudioGate(page)
+  await startSession(page, { key: 'A#', tier: 1 })
+  const notes = await getVisibleNoteLabels(page)
+  expect(notes).toContain('Bb')
+  expect(notes).not.toContain('A#')
+  expect(notes).toContain('Eb')
+  expect(notes).not.toContain('D#')
+})
+
 test('submit button is disabled until both note and chord are selected', async ({ page }) => {
   await passAudioGate(page)
   await startSession(page)

@@ -8,8 +8,8 @@ import { useInstallPrompt } from '@/hooks/useInstallPrompt'
 const MAJOR_KEY_ROOTS: NoteName[] = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'F', 'A#', 'D#', 'G#', 'C#']
 
 const KEY_DISPLAY: Record<NoteName, string> = {
-  C: 'C', 'C#': 'C#/Db', D: 'D', 'D#': 'D#/Eb', E: 'E', F: 'F',
-  'F#': 'F#/Gb', G: 'G', 'G#': 'G#/Ab', A: 'A', 'A#': 'A#/Bb', B: 'B',
+  C: 'C', 'C#': 'Db', D: 'D', 'D#': 'Eb', E: 'E', F: 'F',
+  'F#': 'F#', G: 'G', 'G#': 'Ab', A: 'A', 'A#': 'Bb', B: 'B',
 }
 
 export function SessionSetup() {

@@ -188,6 +188,7 @@ export function ExerciseScreen() {
           notes={notes}
           selected={selectedNote}
           onSelect={setSelectedNote}
+          keyRoot={config.key}
         />
 
         {lastResult && <Feedback result={lastResult} />}
