@@ -13,46 +13,8 @@
  * user-gesture rules for Web Audio, making it a reliable proxy for phone testing.
  */
 
-import { test, expect, type Page } from '@playwright/test'
-import { passAudioGate, startSession } from './helpers'
-
-// ---------------------------------------------------------------------------
-// Spy injection
-// ---------------------------------------------------------------------------
-
-/**
- * Injects a counter into the page that increments every time an OscillatorNode
- * is started. Must be called before page.goto() so it runs before Tone.js loads.
- */
-async function injectOscillatorSpy(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    ;(window as unknown as Record<string, unknown>).__oscStartCount = 0
-    ;(window as unknown as Record<string, unknown>).__oscCreateCount = 0
-
-    const AnyAC =
-      window.AudioContext ?? (window as unknown as Record<string, unknown>).webkitAudioContext
-    if (!AnyAC) return
-
-    const origCreate = (AnyAC as typeof AudioContext).prototype.createOscillator
-    ;(AnyAC as typeof AudioContext).prototype.createOscillator = function () {
-      ;(window as unknown as Record<string, number>).__oscCreateCount++
-      const osc = origCreate.call(this)
-      const origStart = osc.start.bind(osc)
-      osc.start = (...args: Parameters<typeof osc.start>) => {
-        ;(window as unknown as Record<string, number>).__oscStartCount++
-        return origStart(...args)
-      }
-      return osc
-    }
-  })
-}
-
-async function getOscCounts(page: Page): Promise<{ created: number; started: number }> {
-  return page.evaluate(() => ({
-    created: (window as unknown as Record<string, number>).__oscCreateCount ?? 0,
-    started: (window as unknown as Record<string, number>).__oscStartCount ?? 0,
-  }))
-}
+import { test, expect } from '@playwright/test'
+import { passAudioGate, startSession, injectOscillatorSpy, getOscCounts } from './helpers'
 
 // ---------------------------------------------------------------------------
 // Tests
