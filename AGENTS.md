@@ -95,8 +95,21 @@ The reviewing agent must have no context from the implementation session — it 
 reach its own conclusions independently. Address any **blocking** findings before
 proceeding. Use your judgment on warnings and minors.
 
-### Level 5 — Human review
-Only after levels 1–4 pass: commit, push, and hand off to the human.
+### Level 5 — CI green
+Push your branch and verify that GitHub Actions passes.
+
+**Checking status:** use the GitHub MCP tool `pull_request_read` with `method: get_check_runs` on your PR. Poll until all check runs show `"status": "completed"`. Every run must have `"conclusion": "success"` (or `"skipped"` for the deploy job on PRs).
+
+**If a check fails:** reproduce locally by running the exact steps CI uses (see `.github/workflows/deploy.yml`):
+```bash
+npm test                         # unit tests
+npm run test:integration         # Playwright / Chromium
+npm run test:integration:webkit  # WebKit — if installed locally
+```
+WebKit tests run in CI even when skipped locally — so a webkit-only failure means you need to diagnose from test names and fix logic, not just re-run Chromium.  Fix, push, and re-check until all runs are green.
+
+### Level 6 — Human review
+Only after levels 1–5 pass: hand off to the human.
 
 ## Session Setup
 
