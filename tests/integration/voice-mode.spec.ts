@@ -431,4 +431,34 @@ test.describe('voice mode', () => {
     await expect(page.getByTestId('note-btn-E')).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByTestId('check-again-btn')).toBeVisible()
   })
+
+  // ---------------------------------------------------------------------------
+  // Mutual exclusivity: voice mode and practice mode
+  // ---------------------------------------------------------------------------
+
+  test('enabling practice mode while voice is listening stops voice', async ({ page }) => {
+    await injectMockSpeechRecognition(page)
+    await setup(page)
+
+    await page.getByTestId('voice-btn').click()
+    await expect(page.getByTestId('voice-btn')).toContainText('Listening')
+
+    await page.getByTestId('practice-toggle-btn').click()
+
+    await expect(page.getByTestId('practice-toggle-btn')).toHaveAttribute('aria-checked', 'true')
+    await expect(page.getByTestId('voice-btn')).not.toContainText('Listening')
+  })
+
+  test('starting voice while practice mode is on disables practice mode', async ({ page }) => {
+    await injectMockSpeechRecognition(page)
+    await setup(page)
+
+    await page.getByTestId('practice-toggle-btn').click()
+    await expect(page.getByTestId('practice-toggle-btn')).toHaveAttribute('aria-checked', 'true')
+
+    await page.getByTestId('voice-btn').click()
+    await expect(page.getByTestId('voice-btn')).toContainText('Listening')
+
+    await expect(page.getByTestId('practice-toggle-btn')).toHaveAttribute('aria-checked', 'false')
+  })
 })

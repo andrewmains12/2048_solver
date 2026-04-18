@@ -54,6 +54,7 @@ export function ExerciseScreen() {
     }
     setLastResult(result)
     playFeedbackTone(result.correct ? 'correct' : 'wrong')
+  // practiceModeRef.current is read via ref — intentionally excluded (stale-closure pattern, see above)
   }, [currentQuestion, selectedNote, selectedChord, hasSubmitted, recordResult])
 
   // When true, the currentQuestion effect will auto-play the incoming question.
@@ -102,6 +103,17 @@ export function ExerciseScreen() {
 
   const { state: voiceState, errorMessage: voiceError, transcript: voiceTranscript, toggle: toggleVoice, reset: resetVoice } =
     useSpeechRecognition(handleVoiceTranscript)
+
+  // Voice and practice mode are mutually exclusive.
+  const handleVoiceToggle = useCallback(() => {
+    if (voiceState !== 'listening' && practiceMode) setPracticeMode(false)
+    toggleVoice()
+  }, [voiceState, practiceMode, toggleVoice])
+
+  const handlePracticeModeToggle = useCallback(() => {
+    if (!practiceMode && voiceState === 'listening') toggleVoice()
+    setPracticeMode((p) => !p)
+  }, [practiceMode, voiceState, toggleVoice])
 
   // Reset selections when question changes; auto-play if the user tapped Next.
   // Auto-play is safe here because the AudioGate ensures the context is running
@@ -211,7 +223,7 @@ export function ExerciseScreen() {
             role="switch"
             aria-checked={practiceMode}
             aria-label="Toggle practice mode"
-            onClick={() => setPracticeMode((p) => !p)}
+            onClick={handlePracticeModeToggle}
             className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
               practiceMode ? 'bg-amber-500' : 'bg-white/20'
             }`}
@@ -244,7 +256,7 @@ export function ExerciseScreen() {
 
           {/* Mic / voice toggle */}
           <button
-            onClick={voiceState !== 'unsupported' ? toggleVoice : undefined}
+            onClick={voiceState !== 'unsupported' ? handleVoiceToggle : undefined}
             disabled={voiceState === 'unsupported'}
             title={voiceTitle}
             aria-label={voiceState === 'listening' ? 'Stop listening' : 'Start voice input'}
