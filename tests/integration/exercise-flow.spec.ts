@@ -150,3 +150,83 @@ test('new session button on stats screen returns to setup', async ({ page }) => 
   await page.getByTestId('new-session-btn').click()
   await expect(page.getByTestId('session-setup')).toBeVisible()
 })
+
+// ---------------------------------------------------------------------------
+// Practice mode
+// ---------------------------------------------------------------------------
+
+test('practice toggle row is visible on exercise screen', async ({ page }) => {
+  await passAudioGate(page)
+  await startSession(page)
+  await expect(page.getByTestId('practice-toggle-row')).toBeVisible()
+  await expect(page.getByTestId('practice-toggle-btn')).toBeVisible()
+})
+
+test('practice mode is off by default and submit reads "Submit"', async ({ page }) => {
+  await passAudioGate(page)
+  await startSession(page)
+
+  const toggle = page.getByTestId('practice-toggle-btn')
+  await expect(toggle).toHaveAttribute('aria-checked', 'false')
+
+  // Enable selection so the submit button becomes visible/readable
+  await page.getByTestId('note-selector').getByRole('button').first().click()
+  await page.getByTestId('chord-selector').getByRole('button').first().click()
+  await expect(page.getByTestId('submit-btn')).toHaveText('Submit')
+})
+
+test('enabling practice mode changes submit button to "Check (no score)"', async ({ page }) => {
+  await passAudioGate(page)
+  await startSession(page)
+
+  await page.getByTestId('practice-toggle-btn').click()
+  await expect(page.getByTestId('practice-toggle-btn')).toHaveAttribute('aria-checked', 'true')
+
+  await page.getByTestId('note-selector').getByRole('button').first().click()
+  await page.getByTestId('chord-selector').getByRole('button').first().click()
+  await expect(page.getByTestId('submit-btn')).toHaveText('Check (no score)')
+})
+
+test('disabling practice mode reverts submit button back to "Submit"', async ({ page }) => {
+  await passAudioGate(page)
+  await startSession(page)
+
+  // On then off
+  await page.getByTestId('practice-toggle-btn').click()
+  await page.getByTestId('practice-toggle-btn').click()
+
+  await page.getByTestId('note-selector').getByRole('button').first().click()
+  await page.getByTestId('chord-selector').getByRole('button').first().click()
+  await expect(page.getByTestId('submit-btn')).toHaveText('Submit')
+})
+
+test('checking in practice mode does not increment the score counter', async ({ page }) => {
+  await passAudioGate(page)
+  await startSession(page)
+
+  await page.getByTestId('practice-toggle-btn').click()
+  await page.getByTestId('note-selector').getByRole('button').first().click()
+  await page.getByTestId('chord-selector').getByRole('button').first().click()
+  await page.getByTestId('submit-btn').click()
+
+  await page.waitForTimeout(300)
+  await expect(page.getByTestId('score-counter')).toHaveText('0/0')
+})
+
+test('checking in practice mode still shows feedback', async ({ page }) => {
+  await passAudioGate(page)
+  await startSession(page)
+
+  await page.getByTestId('practice-toggle-btn').click()
+  await page.getByTestId('note-selector').getByRole('button').first().click()
+  await page.getByTestId('chord-selector').getByRole('button').first().click()
+  await page.getByTestId('submit-btn').click()
+
+  const correct = page.getByTestId('feedback-correct')
+  const incorrect = page.getByTestId('feedback-incorrect')
+  const feedbackVisible = await Promise.race([
+    correct.waitFor({ timeout: 2000 }).then(() => true),
+    incorrect.waitFor({ timeout: 2000 }).then(() => true),
+  ])
+  expect(feedbackVisible).toBe(true)
+})

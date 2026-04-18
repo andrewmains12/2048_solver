@@ -113,3 +113,15 @@ test('stats screen shows accuracy bars after ending session', async ({ page }) =
     'stats-screen',
   )
 })
+
+test('practice mode banner is amber and shows a no-score warning', async ({ page }) => {
+  test.skip(!hasApiKey, 'ANTHROPIC_API_KEY not set — skipping visual test')
+  await passAudioGate(page)
+  await startSession(page)
+  await page.getByTestId('practice-toggle-btn').click()
+  await assertScreenLooksLike(
+    page,
+    'A dark exercise screen with an amber/yellow highlighted banner row that mentions practice mode and that scores do not count. The toggle switch inside the banner is in the ON position. The submit button reads "Check (no score)".',
+    'exercise-screen-practice-on',
+  )
+})
