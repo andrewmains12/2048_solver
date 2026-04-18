@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import type { ChordLabel, NoteName, Result } from '@/types'
 import { buildScale, diatonicChords, chordLabel } from '@/theory'
 import { displayNote } from '@/theory/notes'
-import { playQuestion, playTonicCadence, getContextState, playFeedbackTone, speakCorrection } from '@/audio'
+import { playQuestion, playTonicCadence, getContextState, playFeedbackTone, speakCorrection, playChordPreview, playNotePreview } from '@/audio'
 import { validateAnswer } from '@/exercises'
 import { useSessionStore } from '@/store/sessionStore'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
@@ -20,15 +20,18 @@ export function ExerciseScreen() {
   const [selectedChord, setSelectedChord] = useState<ChordLabel | null>(null)
   const [lastResult, setLastResult] = useState<Result | null>(null)
   const [hasSubmitted, setHasSubmitted] = useState(false)
+  const [practiceMode, setPracticeMode] = useState(false)
 
   // Refs kept in sync during render so memoized callbacks can read current values
   // without being added to their dependency arrays (stale-closure prevention).
   const selectedNoteRef = useRef<NoteName | null>(null)
   const selectedChordRef = useRef<ChordLabel | null>(null)
   const hasSubmittedRef = useRef(false)
+  const practiceModeRef = useRef(false)
   selectedNoteRef.current = selectedNote
   selectedChordRef.current = selectedChord
   hasSubmittedRef.current = hasSubmitted
+  practiceModeRef.current = practiceMode
 
   // Set to true when voice triggers a submission; cleared by the auto-advance effect.
   const voiceAutoAdvancePendingRef = useRef(false)
@@ -46,7 +49,7 @@ export function ExerciseScreen() {
     if (!currentQuestion || !note || !chord) return
     const result = validateAnswer(currentQuestion, { noteName: note, chordLabel: chord })
     if (!hasSubmitted) {
-      recordResult(result)
+      if (!practiceModeRef.current) recordResult(result)
       setHasSubmitted(true)
     }
     setLastResult(result)
@@ -192,6 +195,36 @@ export function ExerciseScreen() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col gap-5 p-4 pb-safe">
+        {/* Practice mode toggle row */}
+        <div
+          className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+            practiceMode
+              ? 'bg-amber-500/20 border border-amber-500/40'
+              : 'bg-white/5 border border-white/10'
+          }`}
+          data-testid="practice-toggle-row"
+        >
+          <span className={practiceMode ? 'text-amber-300 font-medium' : 'text-white/50'}>
+            {practiceMode ? 'Practice — tap buttons to hear, scores don\'t count' : 'Practice mode'}
+          </span>
+          <button
+            role="switch"
+            aria-checked={practiceMode}
+            aria-label="Toggle practice mode"
+            onClick={() => setPracticeMode((p) => !p)}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${
+              practiceMode ? 'bg-amber-500' : 'bg-white/20'
+            }`}
+            data-testid="practice-toggle-btn"
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                practiceMode ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
         {/* Playback controls + voice toggle */}
         <div className="flex gap-2">
           <button
@@ -245,12 +278,14 @@ export function ExerciseScreen() {
           chords={chords}
           selected={selectedChord}
           onSelect={setSelectedChord}
+          onPreview={practiceMode ? playChordPreview : undefined}
         />
 
         <NoteSelector
           notes={notes}
           selected={selectedNote}
           onSelect={setSelectedNote}
+          onPreview={practiceMode ? playNotePreview : undefined}
           keyRoot={config.key}
         />
 
@@ -281,7 +316,7 @@ export function ExerciseScreen() {
             className="w-full py-4 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-bold text-lg transition-colors"
             data-testid="submit-btn"
           >
-            Submit
+            {practiceMode ? 'Check (no score)' : 'Submit'}
           </button>
         )}
       </div>

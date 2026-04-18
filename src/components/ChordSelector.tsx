@@ -5,10 +5,11 @@ interface Props {
   chords: Chord[]
   selected: ChordLabel | null
   onSelect: (label: ChordLabel) => void
+  onPreview?: (chord: Chord) => void
   disabled?: boolean
 }
 
-export function ChordSelector({ chords, selected, onSelect, disabled = false }: Props) {
+export function ChordSelector({ chords, selected, onSelect, onPreview, disabled = false }: Props) {
   return (
     <div className="w-full" data-testid="chord-selector">
       <p className="text-sm font-medium text-white/60 mb-2">What chord?</p>
@@ -18,7 +19,7 @@ export function ChordSelector({ chords, selected, onSelect, disabled = false }: 
           return (
             <button
               key={label}
-              onClick={() => !disabled && onSelect(label)}
+              onClick={() => { if (!disabled) { onSelect(label); onPreview?.(chord) } }}
               disabled={disabled}
               className={`py-3 px-2 rounded-lg font-bold text-sm transition-colors min-h-[44px] ${
                 selected === label
