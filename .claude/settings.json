@@ -8,6 +8,15 @@
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"MANDATORY: Read AGENTS.md at the repository root before taking any other action. It defines project conventions, the docs/ update requirement, and a 6-level verification gate that must be followed before marking work ready for review.\"}}'",
+            "statusMessage": "Loading project conventions..."
+          }
+        ]
       }
     ]
   }

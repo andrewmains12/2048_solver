@@ -116,6 +116,33 @@ export function replayQuestion(chord: Chord, note: NoteName): void {
   playQuestion(chord, note)
 }
 
+export function playChordPreview(chord: Chord): void {
+  if (Tone.context.state !== 'running') {
+    void Tone.context.resume()
+  }
+  try {
+    const s = getSynth()
+    const toneNotes = chordNotes(chord).map((n) => toToneNote(n, 4, chord.root))
+    s.triggerAttackRelease(toneNotes, '2n', Tone.now() + LOOKAHEAD)
+    console.info('[audio] playChordPreview', chord)
+  } catch (err) {
+    console.error('[audio] playChordPreview failed:', err)
+  }
+}
+
+export function playNotePreview(note: NoteName): void {
+  if (Tone.context.state !== 'running') {
+    void Tone.context.resume()
+  }
+  try {
+    const s = getSynth()
+    s.triggerAttackRelease(toToneNote(note, 5), '2n', Tone.now() + LOOKAHEAD)
+    console.info('[audio] playNotePreview', note)
+  } catch (err) {
+    console.error('[audio] playNotePreview failed:', err)
+  }
+}
+
 /**
  * Plays a short feedback tone to confirm a voice interaction result.
  * Silently no-ops if the audio context is not yet running (before the iOS gate).

@@ -5,11 +5,12 @@ interface Props {
   notes: NoteName[]
   selected: NoteName | null
   onSelect: (note: NoteName) => void
+  onPreview?: (note: NoteName) => void
   keyRoot: NoteName
   disabled?: boolean
 }
 
-export function NoteSelector({ notes, selected, onSelect, keyRoot, disabled = false }: Props) {
+export function NoteSelector({ notes, selected, onSelect, onPreview, keyRoot, disabled = false }: Props) {
   return (
     <div className="w-full" data-testid="note-selector">
       <p className="text-sm font-medium text-white/60 mb-2">What note?</p>
@@ -17,7 +18,7 @@ export function NoteSelector({ notes, selected, onSelect, keyRoot, disabled = fa
         {notes.map((note) => (
           <button
             key={note}
-            onClick={() => !disabled && onSelect(note)}
+            onClick={() => { if (!disabled) { onSelect(note); onPreview?.(note) } }}
             disabled={disabled}
             className={`py-3 rounded-lg font-bold text-sm transition-colors min-h-[44px] ${
               selected === note

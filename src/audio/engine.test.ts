@@ -27,7 +27,7 @@ vi.mock('tone', () => ({
 }))
 
 // Import engine AFTER mocks are set up
-const { initAudio, playTonicCadence, playQuestion, getContextState } = await import('./engine')
+const { initAudio, playTonicCadence, playQuestion, getContextState, playChordPreview, playNotePreview } = await import('./engine')
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -178,6 +178,73 @@ describe('playQuestion', () => {
     playQuestion(gDom7, noteB)
     expect(mockContextResume).toHaveBeenCalledOnce()
     Object.defineProperty(Tone.context, 'state', { value: 'running', configurable: true })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// playChordPreview
+// ---------------------------------------------------------------------------
+
+describe('playChordPreview', () => {
+  it('makes exactly 1 triggerAttackRelease call (chord only, no melody)', () => {
+    playChordPreview({ root: 'C', quality: 'major' })
+    expect(getTARCalls()).toHaveLength(1)
+  })
+
+  it('plays at NOW + LOOKAHEAD with 2n duration', () => {
+    playChordPreview({ root: 'C', quality: 'major' })
+    const [call] = getTARCalls()
+    expect(call.time).toBeCloseTo(NOW + LOOKAHEAD, 5)
+    expect(call.duration).toBe('2n')
+  })
+
+  it('voices C major chord correctly in octave 4', () => {
+    playChordPreview({ root: 'C', quality: 'major' })
+    const [call] = getTARCalls()
+    expect(call.notes).toEqual(['C4', 'E4', 'G4'])
+  })
+
+  it('voices G7 chord correctly — notes below root bumped to octave 5', () => {
+    playChordPreview({ root: 'G', quality: 'dominant7' })
+    const [call] = getTARCalls()
+    expect(call.notes).toEqual(['G4', 'B4', 'D5', 'F5'])
+  })
+
+  it('resumes context if suspended before playing', async () => {
+    const Tone = vi.mocked(await import('tone'))
+    Object.defineProperty(Tone.context, 'state', { value: 'suspended', configurable: true })
+    playChordPreview({ root: 'C', quality: 'major' })
+    expect(mockContextResume).toHaveBeenCalledOnce()
+    Object.defineProperty(Tone.context, 'state', { value: 'running', configurable: true })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// playNotePreview
+// ---------------------------------------------------------------------------
+
+describe('playNotePreview', () => {
+  it('makes exactly 1 triggerAttackRelease call', () => {
+    playNotePreview('E')
+    expect(getTARCalls()).toHaveLength(1)
+  })
+
+  it('places the note at octave 5 with 2n duration', () => {
+    playNotePreview('E')
+    const [call] = getTARCalls()
+    expect(call.notes).toBe('E5')
+    expect(call.duration).toBe('2n')
+    expect(call.time).toBeCloseTo(NOW + LOOKAHEAD, 5)
+  })
+
+  it('places every diatonic C-major note at octave 5', () => {
+    const diatonic: NoteName[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+    for (const note of diatonic) {
+      mockTriggerAttackRelease.mockClear()
+      playNotePreview(note)
+      const [call] = getTARCalls()
+      expect(call.notes).toBe(`${note}5`)
+    }
   })
 })
 

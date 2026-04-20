@@ -12,6 +12,7 @@
 | Per-session score counter | Shipped |
 | PWA manifest + offline support | Shipped |
 | Voice input mode | Shipped (see [docs/voice-mode.md](voice-mode.md)) |
+| Practice mode toggle | Shipped |
 | PWA phone install flow | [#19](https://github.com/andrewmains12/2048_solver/issues/19) |
 | Help / intro screen | [#20](https://github.com/andrewmains12/2048_solver/issues/20) |
 | Demo bug: plays all at once | [#21](https://github.com/andrewmains12/2048_solver/issues/21) |
@@ -97,6 +98,18 @@ All-time cross-session persistence tracked in [#22](https://github.com/andrewmai
 - Replay button: re-plays the chord + note without generating a new question
 
 Chord inversion playback tracked in [#12](https://github.com/andrewmains12/2048_solver/issues/12).
+
+---
+
+## Practice Mode Toggle
+
+A toggle on the exercise screen that switches the session into a no-stakes practice mode.
+
+- **Button placement** — A dedicated row between the playback controls and the chord selector (Option C from design). Renders as a subtle pill when off; expands to an amber banner when on.
+- **Audio preview** — In practice mode, tapping a chord or note button plays that option (`playChordPreview` / `playNotePreview` in `src/audio/engine.ts`), letting the user audition each choice by ear before committing.
+- **Score isolation** — `recordResult` is skipped while the toggle is on. The score counter stays frozen for the duration of practice. Toggling back to normal resumes counting.
+- **Feedback still shows** — The "Check (no score)" button (renamed from "Submit") still validates the answer and shows correct/incorrect feedback, so the user can self-assess without pressure.
+- **State scope** — Local React state in `ExerciseScreen`; resets when the session ends.
 
 ---
 
